@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include <QGraphicsView>
+#include <QMenu>
 
 // ----------------------------------------------------------------------------
 
@@ -23,6 +24,11 @@ class NodeView : public QGraphicsView
     Q_OBJECT
 public:
 
+    enum
+    {
+        LayoutSpacing             = 2
+    };
+
     enum class Action
     {
         DebugEnabled,
@@ -32,12 +38,20 @@ public:
         LayoutHoriz,
         LayoutVert,
 
+        AlignLeft,
+        AlignRight,
+        AlignTop,
+        AlignBottom,
+        AlignDialog,
+
         Count
     };
 
     NodeView(NodeScene *scene, QWidget *parent=nullptr);
 
     QAction                     *action(Action action) { return mActions[int(action)]; }
+
+    virtual QMenu               *createMenu();
 
     /* QGraphicsView */
 
@@ -57,11 +71,28 @@ public slots:
 
     virtual void                layoutGridColumns(int columns);
 
+    // align to last item in the selection
+    virtual void                align(Qt::Alignment alignment);
+
+    virtual void                alignDialog();
+
+    virtual void                alignLeft();
+
+    virtual void                alignTop();
+
+    virtual void                alignRight();
+
+    virtual void                alignBottom();
+
+    virtual void                selectionChanged();
+
 private:
 
     NodeScene                   *mScene;
 
     QAction                     *mActions[int(Action::Count)];
+
+    QVector<QGraphicsItem*>     mOrderedSelection;
 };
 
 // ----------------------------------------------------------------------------
