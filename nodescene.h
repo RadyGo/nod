@@ -56,6 +56,8 @@ public:
 
     virtual NodeItem            *createNodeItem(const NodeID &node)=0;
 
+    virtual ConnectionShape     *createConnectionShape()=0;
+
     virtual ConnectionItem      *createConnectionItem(const NodeID &node, const PortID &port)=0;
 
     /* QGraphicsScene */

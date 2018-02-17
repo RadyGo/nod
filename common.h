@@ -140,6 +140,8 @@ struct Connection
     NodeID                  node2;
     PortID                  port2;
 
+    bool                    isValid() const { return node1.isValid() && port1.isValid() && node2.isValid() && port2.isValid(); }
+
     bool                    isEqual(const Connection &c) const;
 
     bool                    contains(const NodeID &node) const { return (node.value == node1.value) || (node.value == node2.value); }
@@ -167,6 +169,7 @@ Q_NAMESPACE
 // ----------------------------------------------------------------------------
 
 class ConnectionItem;
+class ConnectionShape;
 class NodeScene;
 class NodeGrid;
 class NodeItem;

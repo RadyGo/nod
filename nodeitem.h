@@ -49,7 +49,7 @@ public:
 
     virtual QRectF              portRect(const QRectF &rc, Direction direction, int port_index) const=0;
 
-    virtual QRectF              portRect(const QRectF &rc, Direction direction, const PortID &port) const=0;
+    virtual QRectF              portRect(const QRectF &rc, const PortID &port) const=0;
 
     /* QGraphicsItem */
 

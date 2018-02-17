@@ -33,6 +33,8 @@ public:
      */
     virtual NodeItem            *createNodeItem(const NodeID &node)=0;
 
+    virtual ConnectionShape     *createConnectionShape()=0;
+
     virtual ConnectionItem      *createConnectionItem(const Connection &connection)=0;
 
 private:

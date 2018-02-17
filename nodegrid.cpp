@@ -1,6 +1,10 @@
 
 // ----------------------------------------------------------------------------
 
+#include <queue>
+
+// ----------------------------------------------------------------------------
+
 #include <QDebug>
 #include <QPainter>
 
@@ -45,7 +49,7 @@ bool NodeGrid::isCellBlocked(const QPoint &pt) const
 {
     return pt.x() < 0 || pt.y() < 0 ||
            pt.x() >= mCells.width() || pt.y() >= mCells.height() ||
-           mGrid[pt.x() + pt.y() * mCells.width()] != false;
+           mGrid[pt.x() + pt.y() * mCells.width()].cost > 0;
 }
 
 // ----------------------------------------------------------------------------
@@ -53,7 +57,7 @@ bool NodeGrid::isCellBlocked(const QPoint &pt) const
 void NodeGrid::setCellBlocked(const QPoint &pt, bool blocked)
 {
     if (pt.x() >= 0 && pt.y() >= 0 && pt.x() < mCells.width() && pt.y() < mCells.height())
-        mGrid[pt.x() + pt.y() * mCells.width()] = blocked;
+        mGrid[pt.x() + pt.y() * mCells.width()].cost = 100;
 }
 
 // ----------------------------------------------------------------------------
@@ -64,15 +68,21 @@ void NodeGrid::setCellsBlocked(const QRect &rc, bool blocked)
 
     QRect clip = bounds.intersected(rc);
 
-    auto ptr = &mGrid[clip.topLeft().x() + clip.topLeft().y() * mCells.width()];
+    auto row = &mGrid[clip.topLeft().x() + clip.topLeft().y() * mCells.width()];
 
     auto w = clip.width();
     auto h = clip.height();
     auto pitch = mCells.width();
     for (int y=0; y<h; ++y)
     {
-        memset(ptr, blocked ? 1 : 0, w);
-        ptr += pitch;
+        auto col = row;
+        for (int x=0; x<w; ++x)
+        {
+            col->cost = blocked ? 100 : 0;
+            col++;
+        }
+
+        row += pitch;
     }
 }
 
@@ -105,40 +115,146 @@ QPointF NodeGrid::positionAt(const QPoint &cell, bool center) const
 
 // ----------------------------------------------------------------------------
 
+struct Node
+{
+    //int     index;
+    int     i, j;
+    float   cost;
+    bool    visited;
+};
+
+// ----------------------------------------------------------------------------
+
+bool operator<(const Node &a, const Node &b)
+{
+    return a.cost > b.cost;
+}
+
+// ----------------------------------------------------------------------------
+
+static float l1_norm(int i0, int j0, int i1, int j1)
+{
+  return std::abs(i0 - i1) + std::abs(j0 - j1);
+}
+
+// ----------------------------------------------------------------------------
+
 NodeGrid::PathResult NodeGrid::path(QVector<QPointF> &path, const QPointF &p1, const QPointF &p2)
 {
+    if (mCells.isEmpty())
+        return PathResult::NoPath;
+
+    ++mSearchNo;
+
     // TODO: https://github.com/hjweide/a-star/blob/master/astar.cpp
 
     auto c1 = cellAt(p1);
-    if (isCellBlocked(c1))
-        return PathResult::NoPath;
-
     auto c2 = cellAt(p2);
 
-    // path always starts at p1
-    path.append(p1);
+    //auto start = c1.x() + c1.y() * mCells.width();
+    //auto end = c2.x() + c2.y() * mCells.width();
+    auto x0 = c1.x() < c2.x() ? c1.x() : c2.x();
+    auto y0 = c1.y() < c2.y() ? c1.y() : c2.y();
 
-    auto c = c1;
+    std::deque<Node> frontier;
+    std::vector<Node> visited;
 
-    int steps = 10000;
-    while (steps-- >= 0)
+    frontier.push_back({ x0, y0, 0.0f, false });
+
+    int w = mCells.width();
+    int h = mCells.height();
+
+    while (!frontier.empty())
     {
-        if (isBlocked(c))
+        auto &node = frontier.back();
+        frontier.pop_back();
+
+        int n[4][2] = {
+            { node.i > 0 ? node.i - 1 : -1,     node.j },
+            { node.i < w - 1 ? node.i + 1 : -1, node.j },
+            { node.i,                           node.j > 0 ? node.j - 1 : -1 },
+            { node.i,                           node.j < h - 1 ? node.j + 1 : -1 },
+        };
+
+        for (int i=0; i<4; ++i)
         {
-            // blocking cell position is last on path
-            path.append(positionAt(c));
+            auto ni = n[i];
+            if (ni[0] < 0 || ni[1] < 0)
+                continue;
+
+            auto &cell = mGrid[ni[0] + ni[1] * w];
+            if (cell.visited == mSearchNo)
+                continue;
+
+            cell.visited = mSearchNo;
+        }
+
+        /*
+        int n[4] = {
+            node.j > 0 ? node.j .index - mCells.width() : -1,
+            node.i > 0 ? curr.index - 1 : -1,
+            (node.i + 1 < mCells.width()) ? curr.index + 1 : -1,
+            (node.j + 1 < mCells.height()) ? curr.index + mCells.width() : -1,
+        };
+        */
+    }
+
+
+
+#if 0
+    auto start = c1.x() + c1.y() * mCells.width();
+    auto end = c2.x() + c2.y() * mCells.width();
+
+    std::vector<float> costs;
+    costs.resize(mCells.width() * mCells.height());
+
+    for (int i=0; i<costs.size(); ++i)
+        costs[i] = std::numeric_limits<float>::infinity();
+    costs[start] = 0.0f;
+
+    std::priority_queue<Node> next;
+    next.push({ start, 0.0f });
+
+    while (!next.empty())
+    {
+        auto &curr = next.top();
+        if (curr.index == end)
+        {
             break;
         }
 
-        if (c == c2)
-        {
-            // reached end, always ends at p2
-            path.append(p2);
-            return PathResult::Finished;
-        }
+        next.pop();
 
-        // TODO: step c
+        int row = curr.index / mCells.width();
+        int col = curr.index % mCells.width();
+
+        int n[4] = {
+            row > 0 ? curr.index - mCells.width() : -1,
+            col > 0 ? curr.index - 1 : -1,
+            (col + 1 < mCells.width()) ? curr.index + 1 : -1,
+            (row + 1 < mCells.height()) ? curr.index + mCells.width() : -1,
+        };
+
+        for (int i=0; i<4; ++i)
+        {
+            if (n[i] < 0)
+                continue;
+
+            float new_cost = costs[curr.index] + cellWeight(n[i]);
+            if (new_cost >= costs[n[i]])
+                continue;
+
+            float hcost = l1_norm(n[i] / mCells.width(), n[i] % mCells.width(),
+                                  end / mCells.width(), end % mCells.width());
+
+            float prio = new_cost + hcost;
+            next.push({ n[i], prio });
+
+            costs[n[i]] = new_cost;
+            //paths[n[i]] = curr.index;
+        }
     }
+#endif
 
     return PathResult::Blocked;
 }
@@ -157,7 +273,7 @@ void NodeGrid::debugDraw(QPainter &painter)
         float x = mOrigin.x();
         for (int i=0; i<mCells.width(); ++i)
         {
-            if (mGrid[c++])
+            if (mGrid[c++].cost > 0)
                 painter.fillRect(QRectF(x, y, mGridSize, mGridSize), Qt::red);
 
             x += mGridSize;
@@ -165,6 +281,13 @@ void NodeGrid::debugDraw(QPainter &painter)
 
         y += mGridSize;
     }
+}
+
+// ----------------------------------------------------------------------------
+
+int NodeGrid::cellWeight(int index)
+{
+    return mGrid[index].cost;
 }
 
 // ----------------------------------------------------------------------------
@@ -231,7 +354,10 @@ void NodeGrid::updateGrid(const QRectF &area)
 
         auto connection = qgraphicsitem_cast<ConnectionItem*>(item);
         if (connection)
-            connection->updateGrid(*this);
+        {
+            connection->updatePath();
+            connection->updateGrid();
+        }
     }
 }
 

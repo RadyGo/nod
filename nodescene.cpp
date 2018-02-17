@@ -156,7 +156,7 @@ void NodeScene::nodeConnected(NodeModel &model, const NodeID &node, const PortID
 
     for (auto item : mConnectionItems)
     {
-        if (item->connection().contains(node))
+        if (item->connection().contains(node, port))
             return;
     }
 

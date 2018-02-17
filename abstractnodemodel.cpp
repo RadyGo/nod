@@ -51,8 +51,7 @@ Connection AbstractNodeModel::connection(const NodeID &node, const PortID &port)
 {
     for (auto &c : mConnections)
     {
-        if ((node.value == c.node1.value && port.value == c.port1.value) ||
-            (node.value == c.node2.value && port.value == c.port2.value))
+        if (c.contains(node, port))
             return c;
     }
 

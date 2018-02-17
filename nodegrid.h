@@ -86,7 +86,20 @@ private:
     QSizeF                      mSize;
 
     QSize                       mCells;
-    QVector<bool>               mGrid;
+    //QVector<bool>               mGrid;
+
+    struct Cell
+    {
+        int                     i, j;
+        int                     cost;
+        int                     visited;
+    };
+
+    QVector<Cell>               mGrid;
+
+    int                         mSearchNo = 0;
+
+    int                         cellWeight(int index);
 };
 
 // ----------------------------------------------------------------------------
