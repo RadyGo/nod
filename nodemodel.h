@@ -20,7 +20,7 @@ public:
 
     NodeIt(NodeModel &model, uint64_t data);
 
-    const NodeModel             &model() const { return mModel; }
+    const NodeModel             &model() const { return *mModel; }
 
     uint64_t                    data() const { return mData; }
 
@@ -30,9 +30,11 @@ public:
 
     void                        next();
 
+    NodeID                      node() const;
+
 private:
 
-    NodeModel                   &mModel;
+    NodeModel                   *mModel;
     uint64_t                    mData;
 };
 
@@ -76,6 +78,8 @@ public:
     virtual NodeIt              firstNode() const=0;
 
     virtual NodeIt              endNode() const=0;
+
+    virtual NodeID              node(const NodeIt &it) const=0;
 
     virtual void                nextNode(NodeIt &it) const=0;
 
@@ -139,7 +143,7 @@ private:
 // ----------------------------------------------------------------------------
 
 inline NodeIt::NodeIt(NodeModel &model, uint64_t data)
-    : mModel(model),
+    : mModel(&model),
       mData(data)
 {
 }
@@ -148,14 +152,21 @@ inline NodeIt::NodeIt(NodeModel &model, uint64_t data)
 
 inline bool NodeIt::atEnd() const
 {
-    return *this != mModel.endNode();
+    return *this == mModel->endNode();
 }
 
 // ----------------------------------------------------------------------------
 
 inline void NodeIt::next()
 {
-    mModel.nextNode(*this);
+    mModel->nextNode(*this);
+}
+
+// ----------------------------------------------------------------------------
+
+inline NodeID NodeIt::node() const
+{
+    return mModel->node(*this);
 }
 
 // ----------------------------------------------------------------------------
