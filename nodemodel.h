@@ -30,7 +30,7 @@ public:
 
     void                        next();
 
-    NodeID                      node() const { return mNode; }
+    const NodeID                &node() const { return mNode; }
 
     void                        update(const NodeID &node, uint64_t data);
 
@@ -77,9 +77,9 @@ public:
 
     void                        next();
 
-    NodeID                      node() const { return mNode; }
+    const NodeID                &node() const { return mNode; }
 
-    PortID                      port() const { return mPort; }
+    const PortID                &port() const { return mPort; }
 
 private:
 
@@ -135,19 +135,11 @@ public:
 
     /* Ports */
 
-    virtual int                 portCount(const NodeID &node) const=0;
-
-    virtual int                 portCount(const NodeID &node, Direction direction) const;
-
     virtual PortIt              firstPort(const NodeID &node) const=0;
 
     virtual PortIt              endPort(const NodeID &node) const=0;
 
     virtual void                nextPort(PortIt &it) const=0;
-
-    virtual PortID              port(const NodeID &node, int index) const=0;
-
-    virtual PortID              port(const NodeID &node, Direction direction, int index) const;
 
     virtual QVariant            portData(const NodeID &node, const PortID &port, DataRole role)=0;
 

@@ -169,9 +169,8 @@ void NodeScene::nodeConnected(NodeModel &model, const NodeID &node, const PortID
 
 void NodeScene::nodeDisconnected(NodeModel &model, const NodeID &node)
 {
-    auto count = model.portCount(node);
-    for (int i=0; i<count; ++i)
-        portDisconnected(model, node, model.port(node, i));
+    for (auto it=model.firstPort(node), end=model.endPort(node); it!=end; it.next())
+        portDisconnected(model, node, it.port());
 }
 
 // ----------------------------------------------------------------------------
