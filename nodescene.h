@@ -42,6 +42,8 @@ public:
 
     const NodeGrid              &grid() const { return mGrid; }
 
+    bool                        isItemMoveEnabled() const { return mItemMoveEnabled; }
+
     NodeModel                   *model() { return mModel; }
 
     const NodeModel             *model() const { return mModel; }
@@ -66,6 +68,8 @@ public:
 
     void                        mousePressEvent(QGraphicsSceneMouseEvent *event) override;
 
+    void                        mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
+
 protected slots:
 
     virtual void                modelDestroyed();
@@ -88,6 +92,7 @@ private:
     NodeGrid                    mGrid;
     NodeModel                   *mModel = nullptr;
     QVector<NodeItem *>         mNodeItems;
+    bool                        mItemMoveEnabled = true;
     QVector<ConnectionItem *>   mConnectionItems;
     bool                        mDebug = false;
     bool                        mDrawGrid = true;

@@ -107,7 +107,7 @@ NodeItem *NodeScene::itemAt(const QPointF &pt, PortID &port_id)
             auto port = node->portAt(position);
             if (port.isValid())
             {
-                qDebug() << "NodeScene: port press" << port.value;
+                qDebug() << "NodeScene: port at" << port.value;
                 port_id = port;
             }
 
@@ -261,10 +261,10 @@ void NodeScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
 
     PortID port;
     auto item = itemAt(event->scenePos(), port);
-    if (item)
+    if (item && port.isValid())
     {
         qDebug() << "NodeScene: port press" << port.value;
-
+        mItemMoveEnabled = false;
     }
 /*
     auto itms = items(event->scenePos());
@@ -283,6 +283,15 @@ void NodeScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
         }
     }
     */
+}
+
+// ----------------------------------------------------------------------------
+
+void NodeScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
+{
+    QGraphicsScene::mouseReleaseEvent(event);
+
+    mItemMoveEnabled = true;
 }
 
 // ----------------------------------------------------------------------------

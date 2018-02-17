@@ -2,6 +2,7 @@
 // ----------------------------------------------------------------------------
 
 #include <QDebug>
+#include <QStyleOptionGraphicsItem>
 
 // ----------------------------------------------------------------------------
 
@@ -34,7 +35,10 @@ QVariant NodeItem::itemChange(GraphicsItemChange change, const QVariant &value)
     switch (change)
     {
     case ItemPositionChange:
-        qDebug() << "NodeItem: item change" << value.toPointF() << mScene.grid().snapAt(value.toPointF());
+        if (!mScene.isItemMoveEnabled())
+            return pos();
+
+        qDebug() << "NodeItem: item pos change" << value.toPointF() << mScene.grid().snapAt(value.toPointF());
         //if (!mScene.grid().is)
         return mScene.grid().snapAt(value.toPointF(), false);
     default:
@@ -58,6 +62,7 @@ void NodeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 {
     Q_UNUSED(option);
     Q_UNUSED(widget);
+
     if (scene().model())
         draw(*painter);
 }
