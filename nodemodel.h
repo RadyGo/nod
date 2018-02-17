@@ -117,7 +117,7 @@ public:
 
     virtual const char          *roleName(DataRole role) const;
 
-    virtual QString             roleHumanName(DataRole role) const;
+    virtual QString             roleDisplayName(DataRole role) const;
 
     /* Nodes */
 

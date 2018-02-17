@@ -69,6 +69,7 @@ using PortID            = ID<3>;
 
 // ----------------------------------------------------------------------------
 
+// Don't forget to update NodeModel::roleName() and NodeModel::roleDisplayName().
 enum class DataRole
 {
     Display,

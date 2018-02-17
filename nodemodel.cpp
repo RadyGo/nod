@@ -32,6 +32,7 @@ const char *NodeModel::roleName(DataRole role) const
     case DataRole::Index: return "index";
     case DataRole::Position: return "position";
     case DataRole::Size: return "size";
+    case DataRole::Type: return "type";
     case DataRole::Value: return "value";
     case DataRole::User:
         break;
@@ -41,7 +42,7 @@ const char *NodeModel::roleName(DataRole role) const
 
 // ----------------------------------------------------------------------------
 
-QString NodeModel::roleHumanName(DataRole role) const
+QString NodeModel::roleDisplayName(DataRole role) const
 {
     switch (role)
     {
@@ -57,6 +58,7 @@ QString NodeModel::roleHumanName(DataRole role) const
     case DataRole::Index: return QObject::tr("Index");
     case DataRole::Position: return QObject::tr("Position");
     case DataRole::Size: return QObject::tr("Size");
+    case DataRole::Type: return QObject::tr("Type");
     case DataRole::Value: return QObject::tr("Value");
     case DataRole::User:
         break;
