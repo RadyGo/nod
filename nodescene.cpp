@@ -54,25 +54,27 @@ void NodeScene::setModel(NodeModel *model)
     connect(mModel, &NodeModel::nodeDisconnected, this, &NodeScene::nodeDisconnected);
 
 
-    auto it = mModel->firstNode();
-    while (!it.atEnd())
+    auto nit = mModel->firstNode();
+    while (!nit.atEnd())
     {
-        auto node = it.node();
+        auto node = nit.node();
         nodeCreated(*mModel, node);
-        it.next();
+        nit.next();
     }
 
-    it = mModel->firstNode();
-    while (!it.atEnd())
+    nit = mModel->firstNode();
+    while (!nit.atEnd())
     {
-        auto node = it.node();
-        for (int i=0, c=mModel->portCount(node); i<c; i++)
+        auto node = nit.node();
+
+        auto pit = mModel->firstPort(node);
+        while (!pit.atEnd())
         {
-            auto port = mModel->port(node, i);
-            nodeConnected(*mModel, node, port);
+            nodeConnected(*mModel, node, pit.port());
+            pit.next();
         }
 
-        it.next();
+        nit.next();
     }
 }
 
