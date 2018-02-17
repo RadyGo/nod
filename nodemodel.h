@@ -127,10 +127,6 @@ public:
 
     virtual void                setNodeData(const NodeID &node, const QVariant &value, DataRole role)=0;
 
-    virtual int                 nodeCount() const=0;
-
-    virtual NodeID              node(int index) const=0;
-
     virtual NodeIt              firstNode() const=0;
 
     virtual NodeIt              endNode() const=0;

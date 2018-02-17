@@ -179,9 +179,9 @@ bool AbstractNodeModel::serialize(Serializer &serializer, Serialized &data)
         root["version"] = SerializationVersion;
 
         QJsonArray nodes;
-        for (int i=0, c=nodeCount(); i<c; ++i)
+        for (auto nit=firstNode(), end=endNode(); nit!=end; nit.next())
         {
-            auto node_id = node(i);
+            auto node_id = nit.node();
 
             QJsonObject node_obj;
             node_obj["id"] = QString::fromLocal8Bit(node_id.value.toByteArray());
@@ -189,10 +189,13 @@ bool AbstractNodeModel::serialize(Serializer &serializer, Serialized &data)
             auto addPorts = [this, &connections, &node_id, &serializer] (Direction direction) -> QJsonArray {
 
                 QJsonArray items;
-                for (int i=0, c=portCount(node_id, direction); i<c; ++i)
+                for (auto pit=firstPort(node_id), end=endPort(node_id); pit!=end; pit.next())
                 {
+                    if (portDirection(node_id, pit.port()) != direction)
+                        continue;
+
                     QJsonObject prt;
-                    auto port_id = port(node_id, direction, i);
+                    auto port_id = pit.port();
                     prt["id"] = QString::fromLocal8Bit(port_id.value.toByteArray());
 
                     PortID other_port;
