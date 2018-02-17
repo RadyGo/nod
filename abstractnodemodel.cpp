@@ -168,7 +168,6 @@ bool AbstractNodeModel::isConnected(const Connection &connection) const
 
 bool AbstractNodeModel::serialize(Serializer &serializer, Serialized &data)
 {
-
     if (serializer.isReading())
     {
 
@@ -242,6 +241,7 @@ bool AbstractNodeModel::serialize(Serializer &serializer, Serialized &data)
             };
 
             node_obj["in"] = addPorts(Direction::Input);
+
             node_obj["out"] = addPorts(Direction::Output);
 
             QJsonObject node_data;
@@ -254,7 +254,6 @@ bool AbstractNodeModel::serialize(Serializer &serializer, Serialized &data)
 
                 auto name = roleName(role);
                 QString key = name ? QString::fromUtf8(name) : QString("%1").arg(i);
-
                 node_data[key] = serializer.toJson(role_data);
             }
 

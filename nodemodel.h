@@ -14,6 +14,44 @@ namespace nod {
 
 // ----------------------------------------------------------------------------
 
+class NodeIt
+{
+public:
+
+    NodeIt(NodeModel &model, uint64_t data);
+
+    const NodeModel             &model() const { return mModel; }
+
+    uint64_t                    data() const { return mData; }
+
+    void                        setData(uint64_t data) { mData = data; }
+
+    bool                        atEnd() const;
+
+    void                        next();
+
+private:
+
+    NodeModel                   &mModel;
+    uint64_t                    mData;
+};
+
+// ----------------------------------------------------------------------------
+
+inline bool operator==(const NodeIt &a, const NodeIt &b)
+{
+    return &a.model() == &b.model() && a.data() == b.data();
+}
+
+// ----------------------------------------------------------------------------
+
+inline bool operator!=(const NodeIt &a, const NodeIt &b)
+{
+    return !operator==(a, b);
+}
+
+// ----------------------------------------------------------------------------
+
 class NodeModel : public QObject
 {
     Q_OBJECT
@@ -25,6 +63,8 @@ public:
 
     virtual QString             roleHumanName(DataRole role) const;
 
+    virtual bool                createNode(const NodeID &node)=0;
+
     virtual QVariant            nodeData(const NodeID &node, DataRole role) const=0;
 
     virtual void                setNodeData(const NodeID &node, const QVariant &value, DataRole role)=0;
@@ -32,6 +72,12 @@ public:
     virtual int                 nodeCount() const=0;
 
     virtual NodeID              node(int index) const=0;
+
+    virtual NodeIt              firstNode() const=0;
+
+    virtual NodeIt              endNode() const=0;
+
+    virtual void                nextNode(NodeIt &it) const=0;
 
     virtual int                 portCount(const NodeID &node) const=0;
 
@@ -89,6 +135,28 @@ signals:
 
 private:
 };
+
+// ----------------------------------------------------------------------------
+
+inline NodeIt::NodeIt(NodeModel &model, uint64_t data)
+    : mModel(model),
+      mData(data)
+{
+}
+
+// ----------------------------------------------------------------------------
+
+inline bool NodeIt::atEnd() const
+{
+    return *this != mModel.endNode();
+}
+
+// ----------------------------------------------------------------------------
+
+inline void NodeIt::next()
+{
+    mModel.nextNode(*this);
+}
 
 // ----------------------------------------------------------------------------
 
