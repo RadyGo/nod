@@ -6,11 +6,13 @@
 
 // ----------------------------------------------------------------------------
 
+#include <QJsonDocument>
 #include <QObject>
 #include <QSize>
 #include <QPoint>
 #include <QRect>
 #include <QUuid>
+#include <QVariantMap>
 
 // ----------------------------------------------------------------------------
 
@@ -74,17 +76,20 @@ enum class DataRole
     Icon,
     Tooltip,
 
-    PortColor,
+    Color,
 
     Maximum,
     Minimum,
     SingleStep,
     PageStep,
 
-    SelectedIndex,
+    Index,
 
     Position,
     Size,
+
+    /// UUID, used for node types and others
+    Type,
 
     Value,
 
@@ -144,6 +149,11 @@ struct Connection
 // ----------------------------------------------------------------------------
 
 class NodeModel;
+class Serializer;
+
+// ----------------------------------------------------------------------------
+
+using Serialized = QJsonDocument;
 
 // ----------------------------------------------------------------------------
 

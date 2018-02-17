@@ -21,6 +21,10 @@ public:
 
     NodeModel(QObject *parent=nullptr);
 
+    virtual const char          *roleName(DataRole role) const;
+
+    virtual QString             roleHumanName(DataRole role) const;
+
     virtual QVariant            nodeData(const NodeID &node, DataRole role) const=0;
 
     virtual void                setNodeData(const NodeID &node, const QVariant &value, DataRole role)=0;
@@ -41,7 +45,7 @@ public:
 
     virtual Direction           portDirection(const NodeID &node, const PortID &port) const=0;
 
-    virtual NodeID              connectedNode(const NodeID &node, const PortID &port) const=0;
+    virtual NodeID              connectedNode(const NodeID &node, const PortID &port, PortID *other_port=nullptr) const=0;
 
     virtual PortID              connectedPort(const NodeID &node, const PortID &port) const=0;
 
@@ -61,7 +65,11 @@ public:
 
     virtual bool                isConnected(const NodeID &node, const PortID &port) const=0;
 
+    virtual bool                isConnected(const Connection &connection) const=0;
+
     virtual NodeFlags           flags(const NodeID &node) const=0;
+
+    virtual bool                serialize(Serializer &serializer, Serialized &data)=0;
 
 signals:
 
