@@ -102,14 +102,10 @@ NodeItem *NodeScene::itemAt(const QPointF &pt, PortID &port_id)
         auto node = qgraphicsitem_cast<NodeItem*>(item);
         if (node)
         {
-            qDebug() << "NodeScene: node" << node << node->pos();
             auto position = node->mapFromScene(pt);
             auto port = node->portAt(position);
             if (port.isValid())
-            {
-                qDebug() << "NodeScene: port at" << port.value;
                 port_id = port;
-            }
 
             return node;
         }

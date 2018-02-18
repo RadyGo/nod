@@ -30,16 +30,19 @@ public:
         QBrush                  node_header_brush;
         QBrush                  node_header_brush_select;
         QBrush                  node_header_brush_highlight;
-        QFont                   node_header_font;
-        QColor                  node_header_text_color;
+        QFont                   node_header_text_font;
+        QPen                    node_header_text_pen;
 
         int                     port_radius;
         QColor                  port_default_color;
+        int                     port_label_spacing;
+        QFont                   port_label_font;
+        QPen                    port_label_pen;
     };
 
-    static Style                DefaultStyle;
-
     using NodeItem::NodeItem;
+
+    static Style                defaultStyle();
 
     virtual void                drawBackground(QPainter &painter, const QRectF &rect);
 
@@ -48,6 +51,8 @@ public:
     virtual void                drawContent(QPainter &painter, const QRectF &rect);
 
     virtual void                drawPort(QPainter &painter, const QRectF &rect, const PortID &port);
+
+    virtual void                drawPortLabel(QPainter &painter, const QRectF &rect, const PortID &port);
 
     virtual void                drawForeground(QPainter &painter, const QRectF &rect);
 
@@ -67,13 +72,15 @@ public:
 
     QRectF                      portRect(const QRectF &rc, const PortID &port) const override;
 
+    QRectF                      portLabelRect(const QRectF &rc, const PortID &port) const override;
+
 protected:
 
     virtual void                drawHeader(QPainter &painter, const QRectF &rect, const QString &text);
 
 private:
 
-    Style                   mStyle = DefaultStyle;
+    Style                       mStyle = defaultStyle();
 };
 
 // ----------------------------------------------------------------------------

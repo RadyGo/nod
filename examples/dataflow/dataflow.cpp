@@ -515,7 +515,7 @@ public:
         }
     }
 
-    QVariant portData(const NodeID &node_id, const PortID &port_id, DataRole role) override
+    QVariant portData(const NodeID &node_id, const PortID &port_id, DataRole role) const override
     {
         int node_idx =  index(node_id);
         if (node_idx < 0)

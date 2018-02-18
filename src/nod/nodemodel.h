@@ -141,7 +141,7 @@ public:
 
     virtual void                nextPort(PortIt &it) const=0;
 
-    virtual QVariant            portData(const NodeID &node, const PortID &port, DataRole role)=0;
+    virtual QVariant            portData(const NodeID &node, const PortID &port, DataRole role) const=0;
 
     virtual Direction           portDirection(const NodeID &node, const PortID &port) const=0;
 

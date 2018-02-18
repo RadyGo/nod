@@ -39,9 +39,6 @@ QVariant NodeItem::itemChange(GraphicsItemChange change, const QVariant &value)
     case ItemPositionChange:
         if (!mScene.isItemMoveEnabled())
             return pos();
-
-        qDebug() << "NodeItem: item pos change" << value.toPointF() << mScene.grid().snapAt(value.toPointF());
-        //if (!mScene.grid().is)
         return mScene.grid().snapAt(value.toPointF(), false);
     default:
         break;
@@ -76,8 +73,16 @@ int NodeItem::portCount(Direction direction) const
     int count = forAllPorts(direction, [] (const PortID &, int) {
         return true;
     });
-
     return count < 0 ? 0 : count;
+}
+
+// ----------------------------------------------------------------------------
+
+int NodeItem::portIndex(const PortID &port, Direction direction) const
+{
+    return forAllPorts(direction, [&port] (const PortID &id, int) -> bool {
+        return (id == port) ? false : true;
+    });
 }
 
 // ----------------------------------------------------------------------------

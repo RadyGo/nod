@@ -47,26 +47,13 @@ void ConnectionItem::updatePath()
     if (!item1 || !item2)
         return;
 
-    auto rc1 = item1->portRect(item1->boundingRect(), mConnection.port1);
-    auto rc2 = item2->portRect(item2->boundingRect(), mConnection.port2);
-
-    qDebug() << "ConnectionItem: update path rect" << rc1 << rc2;
-
-    qDebug() << "ConnectionItem: update path rect center" << rc1.center() << rc2.center();
-
-    qDebug() << "ConnectionItem: update path scene center" << item1->mapToScene(rc1.center()) << item2->mapToScene(rc2.center());
-
     auto c1 = mScene.grid().snapAt(item1->mapToScene(item1->portRect(item1->boundingRect(), mConnection.port1).center()));
     auto c2 = mScene.grid().snapAt(item2->mapToScene(item2->portRect(item2->boundingRect(), mConnection.port2).center()));
-
-    qDebug() << "ConnectionItem: update path" << c1 << c2;
 
     mShape->updatePath(c1, c2);
 
     auto cx = c1.x() < c2.x() ? c1.x() : c2.x();
     auto cy = c1.y() < c2.y() ? c1.y() : c2.y();
-
-    qDebug() << "ConnectionItem: update pos" << cx << cy;
 
     setPos(cx, cy);
 }
@@ -383,9 +370,6 @@ void DefaultConnectionShape::updateShape()
     }
 
     int gs = grid().gridSize();
-    //int gsh = gs >> 1;
-    //minp -= QPointF(gsh, gsh);
-
     auto p0 = path()[0] - minp;
 
 
@@ -393,7 +377,6 @@ void DefaultConnectionShape::updateShape()
     {
         auto p1 = path()[i + 1] - minp;
 
-#if 1
         if (i < path().size() - 2)
         {
             auto p2 = path()[i + 2] - minp;
@@ -417,7 +400,6 @@ void DefaultConnectionShape::updateShape()
                 continue;
             }
         }
-#endif
 
         mCurve.moveTo(p0);
         mCurve.lineTo(p1);
@@ -425,11 +407,7 @@ void DefaultConnectionShape::updateShape()
         p0 = p1;
     }
 
-    //maxp += QPointF(gs + gsh, gs + gsh);
-
     mBounds = QRectF(QPointF(0, 0), maxp - minp);
-
-    qDebug() << "DefaultConnectionShape: bounds" << mBounds << maxp << minp;
 }
 
 // ----------------------------------------------------------------------------
@@ -451,8 +429,7 @@ ConnectionShape::~ConnectionShape()
 
 void ConnectionShape::updatePath(const QPointF &start, const QPointF &end)
 {
-    qDebug() << "ConnectionShape: update path" << start << end;
-
+    // TODO: use A* planner
 #if 0
     mPath.clear();
     mGrid.path(mPath, start, end);

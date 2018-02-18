@@ -14,38 +14,47 @@ namespace nod { namespace qgs {
 
 // ----------------------------------------------------------------------------
 
-DefaultNodeItem::Style DefaultNodeItem::DefaultStyle =
+DefaultNodeItem::Style DefaultNodeItem::defaultStyle()
 {
-    // node_padding
-    //10,
-    // node_pen
-    QColor::fromRgb(0x30, 0x30, 0x30),
-    // node_pen_select
-    QColor::fromRgb(0xff, 0x50, 0x50),
-    // node_brush
-    QColor::fromRgb(0x7d, 0x7d, 0x7d),
-    // node_brush_select
-    QColor::fromRgb(0x94, 0x94, 0x94),
-    // node_brush_highlight
-    Qt::lightGray,
-    // header_height (multiple of grid size)
-    24,
-    // node_header_brush
-    QColor::fromRgb(0xbf, 0xbf, 0xbf),
-    // node_header_brush_select
-    QColor::fromRgb(0xd5, 0xd5, 0xd5),
-    // node_header_brush_highlight
-    Qt::lightGray,
-    // node_header_font
-    QFont(),
-    // node_header_text_color,
-    QColor::fromRgb(0x2c, 0x2c, 0x2c),
+    return {
+        // node_padding
+        //10,
+        // node_pen
+        QColor::fromRgb(0x30, 0x30, 0x30),
+        // node_pen_select
+        QColor::fromRgb(0xff, 0x50, 0x50),
+        // node_brush
+        QColor::fromRgb(0x7d, 0x7d, 0x7d),
+        // node_brush_select
+        QColor::fromRgb(0x94, 0x94, 0x94),
+        // node_brush_highlight
+        Qt::lightGray,
 
-    // port_radius
-    7,
+        // header_height (multiple of grid size)
+        24,
+        // node_header_brush
+        QColor::fromRgb(0xbf, 0xbf, 0xbf),
+        // node_header_brush_select
+        QColor::fromRgb(0xd5, 0xd5, 0xd5),
+        // node_header_brush_highlight
+        Qt::lightGray,
+        // node_header_text_font
+        QFont(),
+        // node_header_text_pen,
+        QColor::fromRgb(0x2c, 0x2c, 0x2c),
 
-    QColor(Qt::blue).lighter()
-};
+        // port_radius
+        7,
+        // port_default_color
+        QColor(Qt::blue).lighter(),
+        // port_label_spacing
+        3,
+        // port_label_font
+        QFont(),
+        // port_label_pen
+        QColor::fromRgb(0x2c, 0x2c, 0x2c)
+    };
+}
 
 // ----------------------------------------------------------------------------
 
@@ -76,8 +85,6 @@ void DefaultNodeItem::drawContent(QPainter &painter, const QRectF &rect)
 
 void DefaultNodeItem::drawPort(QPainter &painter, const QRectF &rect, const PortID &port)
 {
-    qDebug() << "DefaultItem: draw port" << port.value << rect;
-
     auto color_data = model()->portData(node(), port, DataRole::Color);
     if (!color_data.isValid())
         color_data = mStyle.port_default_color;
@@ -86,6 +93,18 @@ void DefaultNodeItem::drawPort(QPainter &painter, const QRectF &rect, const Port
     painter.setBrush(color);
     painter.setPen(color.darker());
     painter.drawEllipse(rect);
+}
+
+// ----------------------------------------------------------------------------
+
+void DefaultNodeItem::drawPortLabel(QPainter &painter, const QRectF &rect, const PortID &port)
+{
+    auto caption = model()->portData(node(), port, DataRole::Display);
+    if (caption.isNull())
+        caption = model()->portData(node(), port, DataRole::Name);
+
+    painter.setPen(mStyle.port_label_pen);
+    painter.drawText(rect, Qt::TextSingleLine | Qt::AlignVCenter, caption.toString());
 }
 
 // ----------------------------------------------------------------------------
@@ -114,10 +133,7 @@ QRectF DefaultNodeItem::contentRect(const QRectF &rc) const
 QRectF DefaultNodeItem::portRect(const QRectF &rc, const PortID &port) const
 {
     auto direction = model()->portDirection(node(), port);
-    auto index = forAllPorts(direction, [&port] (const PortID &id, int) -> bool {
-        return (id == port) ? false : true;
-    });
-
+    auto index = portIndex(port, direction);
     Q_ASSERT(index >= 0);
     if (index < 0)
         return QRectF();
@@ -126,14 +142,47 @@ QRectF DefaultNodeItem::portRect(const QRectF &rc, const PortID &port) const
     int size = mStyle.port_radius * 2;
     int gs = scene().grid().gridSize();
     int gsh = gs >> 1;
-    //int y = mStyle.node_padding + mStyle.header_height + index * (mStyle.port_spacing + size);
     int y = mStyle.header_height + gs * index + gs / 2 - size / 2;
-    //+ gs * index + gsh - size / 2.0f;
 
     if (direction == Direction::Input)
         return QRectF(gsh - size / 2.0f, y, size, size);
 
     return QRectF(rc.right() - gsh - size / 2.0f, y, size, size);
+}
+
+// ----------------------------------------------------------------------------
+
+QRectF DefaultNodeItem::portLabelRect(const QRectF &rc, const PortID &port) const
+{
+    auto direction = model()->portDirection(node(), port);
+    auto port_rc = portRect(rc, port);
+
+    auto name = model()->portData(node(), port, DataRole::Name);
+    if (name.isNull())
+        name = model()->portData(node(), port, DataRole::Display);
+
+    QFontMetricsF m(mStyle.port_label_font);
+    auto text_rc = m.boundingRect(QRectF(0, 0, 0xfffff, port_rc.height()), Qt::TextSingleLine | Qt::AlignVCenter, name.toString());
+
+    auto x = 0;
+    auto y = port_rc.top() + (port_rc.height() / 2 - text_rc.height() / 2);
+
+    if (direction == Direction::Output)
+    {
+        x = port_rc.left() - mStyle.port_label_spacing - text_rc.width();
+    } else
+        x = port_rc.right() + mStyle.port_label_spacing;
+
+    return QRectF(QPointF(x, y), text_rc.size());
+/*
+
+    if (direction == Direction::Input)
+//    {
+//        xoffset -= text_rc.wid
+        return QRectF(port_rc.topRight() - QPointF(0, yoffset), text_rc.size());
+
+    return QRectF(port_rc.topLeft() - QPointF(text_rc.width(), yoffset), text_rc.size());
+    */
 }
 
 // ----------------------------------------------------------------------------
@@ -190,8 +239,11 @@ void DefaultNodeItem::draw(QPainter &painter)
         {
             if (model()->portDirection(it.node(), it.port()) == direction)
             {
-                auto rect = portRect(rc, it.port());
-                drawPort(painter, rect, it.port());
+                auto port_rect = portRect(rc, it.port());
+                drawPort(painter, port_rect, it.port());
+
+                auto label_rect = portLabelRect(rc, it.port());
+                drawPortLabel(painter, label_rect, it.port());
             }
         }
     };
@@ -212,17 +264,41 @@ void DefaultNodeItem::draw(QPainter &painter)
 QSizeF DefaultNodeItem::calculateItemSize() const
 {
     auto size = calculateContentSize();
-    auto iheight = portCount(Direction::Input) * scene().grid().gridSize();
-    auto oheight = portCount(Direction::Output) * scene().grid().gridSize();
 
-    if (size.height() < iheight) size.setHeight(iheight);
-    if (size.height() < oheight) size.setHeight(oheight);
+    auto measurePorts = [this] (Direction direction) -> QRectF {
+
+        QRectF rc;
+        forAllPorts(direction, [this, &rc] (const PortID &id, int) -> bool {
+
+            auto bounds = QRectF();
+            auto port_rect = portRect(bounds, id);
+            auto label_rect = portLabelRect(bounds, id);
+
+            rc = rc.united(port_rect);
+            rc = rc.united(label_rect);
+
+            return true;
+        });
+
+        return rc;
+    };
+
+    auto in_rect = measurePorts(Direction::Input);
+    auto out_rect = measurePorts(Direction::Output);
+
+    if (size.height() < in_rect.height()) size.setHeight(in_rect.height());
+    if (size.height() < out_rect.height()) size.setHeight(out_rect.height());
+
+    auto port_w = in_rect.width() + scene().grid().gridSize() + out_rect.width();
+    if (size.width() < port_w) size.setWidth(port_w);
 
     auto header = headerRect(QRectF(0, 0, size.width(), size.height()));
     size.setHeight(size.height() + header.height());
 
+    auto offset = scene().grid().gridSize();
     auto p0 = scene().grid().snapAt(pos());
-    auto p1 = scene().grid().snapAt(pos() + QPointF(size.width(), size.height()));
+    auto p1 = scene().grid().snapAt(pos() + QPointF(offset, offset) + QPointF(size.width(), size.height()));
+
     auto pt = p1 - p0;
     return QSizeF(pt.x(), pt.y());
 }
@@ -232,13 +308,13 @@ QSizeF DefaultNodeItem::calculateItemSize() const
 void DefaultNodeItem::drawHeader(QPainter &painter, const QRectF &rect, const QString &text)
 {
     painter.fillRect(rect, isSelected() ? mStyle.node_header_brush_select : mStyle.node_header_brush);
-    painter.setFont(mStyle.node_header_font);
+    painter.setFont(mStyle.node_header_text_font);
 
     QTextOption o;
     o.setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
     o.setFlags(QTextOption::IncludeTrailingSpaces);
     o.setWrapMode(QTextOption::NoWrap);
-    painter.setPen(mStyle.node_header_text_color);
+    painter.setPen(mStyle.node_header_text_pen);
     painter.drawText(rect, text, o);
 }
 

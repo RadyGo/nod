@@ -46,6 +46,8 @@ public:
 
     virtual QRectF              portRect(const QRectF &rc, const PortID &port) const=0;
 
+    virtual QRectF              portLabelRect(const QRectF &rc, const PortID &port) const=0;
+
     /* QGraphicsItem */
 
     int                         type() const override { return Type; }
@@ -62,6 +64,8 @@ protected:
     int                         forAllPorts(Direction direction, F f) const;
 
     int                         portCount(Direction direction) const;
+
+    int                         portIndex(const PortID &port, Direction direction) const;
 
 private:
 
