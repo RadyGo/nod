@@ -55,7 +55,7 @@ Connection AbstractNodeModel::connection(const NodeID &node, const PortID &port)
             return c;
     }
 
-    return { NodeID::invalid(), PortID::invalid(), NodeID::invalid(), PortID::invalid() };
+    return Connection::invalid();
 }
 
 // ----------------------------------------------------------------------------

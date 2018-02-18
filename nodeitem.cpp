@@ -19,6 +19,8 @@ NodeItem::NodeItem(NodeScene &scene, const NodeID &node)
     : mScene(scene),
       mNode(node)
 {
+    setZValue(ItemZ::Node);
+
     setFlags(QGraphicsItem::ItemIsMovable |
              QGraphicsItem::ItemIsFocusable |
              QGraphicsItem::ItemIsSelectable |

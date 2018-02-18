@@ -60,6 +60,12 @@ public:
 
     virtual ConnectionItem      *createConnectionItem(const NodeID &node, const PortID &port)=0;
 
+    virtual bool                beginCreateConnection(const QPointF &pt, const NodeID &node, const PortID &port);
+
+    virtual void                updateCreateConnection(const QPointF &pt);
+
+    virtual bool                endCreateConnection(const QPointF &pt, const Connection &connection);
+
     /* QGraphicsScene */
 
     void                        drawBackground(QPainter *painter, const QRectF &rect) override;
@@ -98,6 +104,13 @@ private:
     QVector<ConnectionItem *>   mConnectionItems;
     bool                        mDebug = false;
     bool                        mDrawGrid = true;
+
+    bool                        mCreateConnection = false;
+    QPointF                     mCreatePoint;
+    NodeID                      mCreateNode;
+    PortID                      mCreatePort;
+    QScopedPointer<ConnectionShape> mCreateShape;
+    QPointF                     mCreateOffset;
 };
 
 // ----------------------------------------------------------------------------

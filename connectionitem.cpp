@@ -24,6 +24,8 @@ ConnectionItem::ConnectionItem(NodeScene &scene, const Connection &connection, C
       mShape(shape)
 {
     mScene.addItem(this);
+
+    setZValue(ItemZ::Connection);
 }
 
 // ----------------------------------------------------------------------------
@@ -86,10 +88,8 @@ QRectF ConnectionItem::boundingRect() const
 
 // ----------------------------------------------------------------------------
 
-void ConnectionItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+void ConnectionItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *)
 {
-    painter->drawRect(option->rect);
-
     if (mShape)
         mShape->draw(*painter);
 }
@@ -383,8 +383,8 @@ void DefaultConnectionShape::updateShape()
     }
 
     int gs = grid().gridSize();
-    int gsh = gs >> 1;
-    minp -= QPointF(gsh, gsh);
+    //int gsh = gs >> 1;
+    //minp -= QPointF(gsh, gsh);
 
     auto p0 = path()[0] - minp;
 

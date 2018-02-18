@@ -140,6 +140,8 @@ struct Connection
     NodeID                  node2;
     PortID                  port2;
 
+    static Connection       invalid() { return { NodeID::invalid(), PortID::invalid(), NodeID::invalid(), PortID::invalid()}; }
+
     bool                    isValid() const { return node1.isValid() && port1.isValid() && node2.isValid() && port2.isValid(); }
 
     bool                    isEqual(const Connection &c) const;
@@ -161,6 +163,17 @@ using Serialized = QJsonDocument;
 // ----------------------------------------------------------------------------
 
 namespace qgs {
+
+// ----------------------------------------------------------------------------
+
+struct ItemZ
+{
+    enum
+    {
+        Connection              = 1,
+        Node                    = 1000
+    };
+};
 
 // ----------------------------------------------------------------------------
 

@@ -120,6 +120,48 @@ NodeItem *NodeScene::itemAt(const QPointF &pt, PortID &port_id)
 
 // ----------------------------------------------------------------------------
 
+bool NodeScene::beginCreateConnection(const QPointF &pt, const NodeID &node, const PortID &port)
+{
+    mCreateConnection = true;
+    mCreatePoint = mGrid.snapAt(pt);
+    mCreateNode = node;
+    mCreatePort = port;
+    mCreateShape.reset(createConnectionShape());
+
+    invalidate(sceneRect(), ForegroundLayer);
+
+    return true;
+}
+
+// ----------------------------------------------------------------------------
+
+void NodeScene::updateCreateConnection(const QPointF &pt)
+{
+    if (!mCreateConnection)
+        return;
+
+    auto sp = mGrid.snapAt(pt);
+    mCreateOffset = QPointF(mCreatePoint.x() < sp.x() ? mCreatePoint.x() : sp.x(),
+                            mCreatePoint.y() < sp.y() ? mCreatePoint.y() : sp.y());
+
+    mCreateShape->updatePath(mCreatePoint, mGrid.snapAt(pt));
+
+    invalidate(sceneRect(), ForegroundLayer);
+}
+
+// ----------------------------------------------------------------------------
+
+bool NodeScene::endCreateConnection(const QPointF &pt, const Connection &connection)
+{
+    mCreateConnection = false;
+
+    invalidate(sceneRect(), ForegroundLayer);
+
+    return true;
+}
+
+// ----------------------------------------------------------------------------
+
 void NodeScene::drawBackground(QPainter *painter, const QRectF &rect)
 {
 //    QGraphicsScene::drawBackground(painter, rect);
@@ -139,6 +181,15 @@ void NodeScene::drawForeground(QPainter *painter, const QRectF &rect)
 
     if (mDebug)
         mGrid.debugDraw(*painter);
+
+    if (mCreateConnection)
+    {
+        auto old = painter->transform();
+        painter->translate(mCreateOffset);
+        mCreateShape->draw(*painter);
+        painter->drawRect(mCreateShape->boundingRect());
+        painter->setTransform(old);
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -252,6 +303,30 @@ void NodeScene::sceneRectChanged(const QRectF &rect)
 {
     mGrid.setSceneRect(rect);
 }
+// ----------------------------------------------------------------------------
+
+void NodeScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
+{
+    QGraphicsScene::mouseMoveEvent(event);
+
+    bool redraw = false;
+    if (event->buttons() & Qt::LeftButton)
+    {
+        // TODO: should propably make NodeItem call NodeScene instead
+        mGrid.updateGrid();
+        redraw = true;
+    }
+
+    if (mCreateConnection)
+    {
+        updateCreateConnection(event->scenePos());
+        redraw = true;
+    }
+
+    if (redraw)
+        invalidate(sceneRect(), QGraphicsScene::ForegroundLayer);
+}
+
 
 // ----------------------------------------------------------------------------
 
@@ -263,26 +338,13 @@ void NodeScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
     auto item = itemAt(event->scenePos(), port);
     if (item && port.isValid())
     {
-        qDebug() << "NodeScene: port press" << port.value;
+        qDebug() << "NodeScene: port press" << port.value;        
+
+        if (!beginCreateConnection(event->scenePos(), item->node(), port))
+            return;
+
         mItemMoveEnabled = false;
     }
-/*
-    auto itms = items(event->scenePos());
-    for (auto item : itms)
-    {
-        auto node = qgraphicsitem_cast<NodeItem*>(item);
-        if (node)
-        {
-            qDebug() << "NodeScene: node" << node << node->pos();
-            auto port = node->portAt(event->pos());
-            if (port.isValid())
-            {
-                qDebug() << "NodeScene: port press" << port.value;
-            } else
-                QGraphicsScene::mousePressEvent(event);
-        }
-    }
-    */
 }
 
 // ----------------------------------------------------------------------------
@@ -291,21 +353,21 @@ void NodeScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 {
     QGraphicsScene::mouseReleaseEvent(event);
 
-    mItemMoveEnabled = true;
-}
-
-// ----------------------------------------------------------------------------
-
-void NodeScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
-{
-    QGraphicsScene::mouseMoveEvent(event);
-
-    if (event->buttons() & Qt::LeftButton)
+    if (mCreateConnection)
     {
-        // TODO: should propably make NodeItem call NodeScene instead
-        mGrid.updateGrid();
-        invalidate(sceneRect(), QGraphicsScene::ForegroundLayer);
+        PortID port;
+        auto item = itemAt(event->scenePos(), port);
+        if (item && port.isValid())
+        {
+            Connection conn = { mCreateNode, mCreatePort, item->node(), port };
+            endCreateConnection(event->scenePos(), conn);
+        } else
+            endCreateConnection(event->scenePos(), Connection::invalid());
+
+        mCreateConnection = false;
     }
+
+    mItemMoveEnabled = true;
 }
 
 // ----------------------------------------------------------------------------
