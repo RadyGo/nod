@@ -4,6 +4,8 @@ set(SOURCES
     nod/abstractnodemodel.cpp
     nod/common.cpp
     nod/connectionitem.cpp
+    nod/connectionshape.cpp
+    nod/defaultconnectionshape.cpp
     nod/defaultnodeitem.cpp
     nod/nodegrid.cpp
     nod/nodeitem.cpp
@@ -19,6 +21,8 @@ set(HEADERS
     nod/abstractnodemodel.h
     nod/common.h
     nod/connectionitem.h
+    nod/connectionshape.h
+    nod/defaultconnectionshape.h
     nod/defaultnodeitem.h
     nod/nodegrid.h
     nod/nodeitem.h

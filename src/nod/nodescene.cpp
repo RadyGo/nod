@@ -8,6 +8,7 @@
 // ----------------------------------------------------------------------------
 
 #include "nod/connectionitem.h"
+#include "nod/connectionshape.h"
 #include "nod/nodeitem.h"
 #include "nod/nodeitemfactory.h"
 #include "nod/nodegrid.h"

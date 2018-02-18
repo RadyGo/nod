@@ -21,6 +21,7 @@
 
 #include "nod/abstractnodemodel.h"
 #include "nod/defaultnodeitem.h"
+#include "nod/defaultconnectionshape.h"
 #include "nod/connectionitem.h"
 #include "nod/nodemodel.h"
 #include "nod/nodeitem.h"
