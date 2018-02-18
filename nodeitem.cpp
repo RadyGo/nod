@@ -71,6 +71,17 @@ void NodeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 
 // ----------------------------------------------------------------------------
 
+int NodeItem::portCount(Direction direction) const
+{
+    int count = forAllPorts(direction, [] (const PortID &, int) {
+        return true;
+    });
+
+    return count < 0 ? 0 : count;
+}
+
+// ----------------------------------------------------------------------------
+
 } } // namespaces
 
 // ----------------------------------------------------------------------------

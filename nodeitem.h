@@ -11,6 +11,7 @@
 // ----------------------------------------------------------------------------
 
 #include "nod/common.h"
+#include "nod/nodemodel.h"
 #include "nod/nodescene.h"
 
 // ----------------------------------------------------------------------------
@@ -41,13 +42,7 @@ public:
 
     virtual void                draw(QPainter &painter)=0;
 
-    virtual int                 portCount(Direction direction) const=0;
-
-    virtual int                 portIndex(const PortID &port) const=0;
-
     virtual PortID              portAt(const QPointF &pos) const=0;
-
-    virtual QRectF              portRect(const QRectF &rc, Direction direction, int port_index) const=0;
 
     virtual QRectF              portRect(const QRectF &rc, const PortID &port) const=0;
 
@@ -61,11 +56,37 @@ public:
 
     QVariant                    itemChange(GraphicsItemChange change, const QVariant &value) override;
 
+protected:
+
+    template <typename F>
+    int                         forAllPorts(Direction direction, F f) const;
+
+    int                         portCount(Direction direction) const;
+
 private:
 
     NodeScene                   &mScene;
     NodeID                      mNode;
 };
+
+// ----------------------------------------------------------------------------
+
+template<typename F>
+inline int NodeItem::forAllPorts(Direction direction, F f) const
+{
+    int index = 0;
+    for (auto it=model()->firstPort(node()), end=model()->endPort(node()); it!=end; it.next())
+    {
+        if (model()->portDirection(it.node(), it.port()) == direction)
+        {
+            if (!f(it.port(), index))
+                return index;
+
+            index++;
+        }
+    }
+    return -1;
+}
 
 // ----------------------------------------------------------------------------
 
