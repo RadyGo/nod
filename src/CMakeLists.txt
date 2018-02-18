@@ -7,6 +7,7 @@ set(SOURCES
     nod/connectionshape.cpp
     nod/defaultconnectionshape.cpp
     nod/defaultnodeitem.cpp
+    nod/nodefactory.cpp
     nod/nodegrid.cpp
     nod/nodeitem.cpp
     nod/nodeitemfactory.cpp
@@ -24,6 +25,7 @@ set(HEADERS
     nod/connectionshape.h
     nod/defaultconnectionshape.h
     nod/defaultnodeitem.h
+    nod/nodefactory.h
     nod/nodegrid.h
     nod/nodeitem.h
     nod/nodeitemfactory.h

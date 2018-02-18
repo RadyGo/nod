@@ -11,6 +11,7 @@
 
 // ----------------------------------------------------------------------------
 
+#include "nod/connectionshape.h"
 #include "nod/nodegrid.h"
 
 // ----------------------------------------------------------------------------
@@ -53,12 +54,6 @@ public:
     NodeItem                    *nodeItem(const NodeID &node);
 
     NodeItem                    *itemAt(const QPointF &pt, PortID &port_id);
-
-    virtual NodeItem            *createNodeItem(const NodeID &node)=0;
-
-    virtual ConnectionShape     *createConnectionShape()=0;
-
-    virtual ConnectionItem      *createConnectionItem(const NodeID &node, const PortID &port)=0;
 
     virtual bool                beginCreateConnection(const QPointF &pt, const NodeID &node, const PortID &port);
 

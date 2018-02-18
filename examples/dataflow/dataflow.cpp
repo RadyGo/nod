@@ -74,69 +74,7 @@ void DataFlowModel::mapAttribute(const AttributeID &attribute, const PortID &por
     // TODO
 }
 
-struct NodeType
-{
-    NodeTypeID                  id;
-    QIcon                       icon;
-    QString                     name;
-    QString                     description;
-};
-
-class NodeFactory
-{
-public:
-
-    const NodeType              *type(const NodeTypeID &id) const;
-
-    void                        registerType(const NodeType &type);
-
-    int                         typeCount() const { return mTypes.size(); }
-
-    const NodeType              &type(int index) const { return mTypes[index]; }
-
-    /** Creates a node from serialized data.
-     *
-     * @param model The model which stores the node data.
-     * @param data The serialized data.
-     *
-     * @return The node ID or invalid if failed.
-     *
-     */
-    virtual NodeID              createNode(NodeModel &model, const Serialized &data)=0;
-
-    /** Creates a new node from scratch.
-     *
-     * @param model The model which stores the node data.
-     * @param type The type of the node.
-     *
-     * @return The node ID or invalid if failed.
-     *
-     */
-    virtual NodeID              createNode(NodeModel &model, const NodeTypeID &type)=0;
-
-private:
-
-    QVector<NodeType>           mTypes;
-};
-
 namespace qgs { // QGraphicsScene front-end
-
-#if 0
-class ConnectionShape
-{
-public:
-
-    void                        set(const QPointF &p1, const QPointF &c1, const QPointF &c2, const QPointF &p2);
-
-    const QPainterPath          &path() const;
-
-    void                        updateGrid(NodeGrid &grid);
-
-private:
-
-    QPainterPath                mPath;
-};
-#endif
 
 class WidgetItem : public DefaultNodeItem
 {
@@ -258,29 +196,6 @@ public:
 
     DataFlowScene(NodeItemFactory &factory, QObject *parent=nullptr)
         : NodeScene(factory, parent) {}
-
-    NodeItem                    *createNodeItem(const NodeID &node) override
-    {
-        return new DataFlowItem(*this, node);
-    }
-
-    ConnectionShape             *createConnectionShape() override
-    {
-        return new DefaultConnectionShape(grid());
-    }
-
-    ConnectionItem              *createConnectionItem(const NodeID &node, const PortID &port) override
-    {
-        auto connection = model()->connection(node, port);
-        if (!connection.isValid())
-            return nullptr;
-
-        auto shape = createConnectionShape();
-        auto item = new ConnectionItem(*this, connection, shape);
-        item->updatePath();
-        item->updateGrid();
-        return item;
-    }
 };
 
 }
@@ -566,9 +481,21 @@ public:
     }
 };
 
+class TestNodeFactory : public NodeFactory
+{
+public:
+
+    NodeID createNode(NodeModel &model, const NodeTypeID &type) override
+    {
+        return NodeID::invalid();
+    }
+};
+
 class TestItemFactory : public NodeItemFactory
 {
 public:
+
+    using NodeItemFactory::NodeItemFactory;
 
     NodeItem *createNodeItem(const NodeID &node) override
     {
@@ -580,8 +507,9 @@ public:
         return new DefaultConnectionShape(scene().grid());
     }
 
-    ConnectionItem *createConnectionItem(const Connection &connection) override
+    ConnectionItem *createConnectionItem(const NodeID &node, const PortID &port) override
     {
+        auto connection = scene().model()->connection(node, port);
         if (!connection.isValid())
             return nullptr;
 
@@ -676,9 +604,11 @@ int main(int argc, char **argv)
 
     NodeID node;
 
-    TestItemFactory factory;
 
-    DataFlowScene scene(factory);
+    TestNodeFactory node_factory;
+    TestItemFactory item_factory(node_factory);
+
+    DataFlowScene scene(item_factory);
 
     /*
     auto item = new DefaultItem(scene, node);

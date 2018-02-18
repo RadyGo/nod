@@ -123,7 +123,7 @@ bool NodeScene::beginCreateConnection(const QPointF &pt, const NodeID &node, con
     mCreatePoint = mGrid.snapAt(pt);
     mCreateNode = node;
     mCreatePort = port;
-    mCreateShape.reset(createConnectionShape());
+    mCreateShape.reset(mFactory.createConnectionShape());
 
     invalidate(sceneRect(), ForegroundLayer);
 
@@ -208,7 +208,7 @@ void NodeScene::nodeConnected(NodeModel &model, const NodeID &node, const PortID
             return;
     }
 
-    auto item = createConnectionItem(node, port);
+    auto item = mFactory.createConnectionItem(node, port);
     if (item)
         mConnectionItems.append(item);
 }
@@ -251,7 +251,7 @@ void NodeScene::nodeCreated(NodeModel &model, const NodeID &node)
             return;
     }
 
-    auto item = createNodeItem(node);
+    auto item = mFactory.createNodeItem(node);
     if (item)
     {
         auto pos = model.nodeData(node, DataRole::Position);
