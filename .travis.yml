@@ -1,14 +1,12 @@
 language: cpp
 
-install:
-  - sudo apt-get update
-  - sudo apt install qtbase5-dev qt5-qmake
-
 compiler:
   - gcc
   - clang
 
 before_script:
+  - sudo apt-get update
+  - sudo apt install qtbase5-dev qt5-qmake
   - mkdir build
   - cd build
   - cmake ..
