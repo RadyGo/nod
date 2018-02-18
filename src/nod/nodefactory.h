@@ -79,18 +79,6 @@ public:
      */
     const NodeType              &type(int index) const { return mTypes[index]; }
 
-#if 0
-    /** Creates a node from serialized data.
-     *
-     * @param model The model which stores the node data.
-     * @param data The serialized data.
-     *
-     * @return The node ID or invalid if failed.
-     *
-     */
-    virtual NodeID              createNode(NodeModel &model, const Serialized &data)=0;
-#endif
-
     /** Creates a new node from scratch.
      *
      * @param model The model which stores the node data.

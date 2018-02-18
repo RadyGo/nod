@@ -20,6 +20,7 @@
 */
 
 #include "nod/abstractnodemodel.h"
+#include "nod/defaultnodeitemfactory.h"
 #include "nod/defaultnodeitem.h"
 #include "nod/defaultconnectionshape.h"
 #include "nod/connectionitem.h"
@@ -491,33 +492,15 @@ public:
     }
 };
 
-class TestItemFactory : public NodeItemFactory
+class TestItemFactory : public DefaultNodeItemFactory
 {
 public:
 
-    using NodeItemFactory::NodeItemFactory;
+    using DefaultNodeItemFactory::DefaultNodeItemFactory;
 
     NodeItem *createNodeItem(const NodeID &node) override
     {
         return new DataFlowItem(scene(), node);
-    }
-
-    ConnectionShape *createConnectionShape() override
-    {
-        return new DefaultConnectionShape(scene().grid());
-    }
-
-    ConnectionItem *createConnectionItem(const NodeID &node, const PortID &port) override
-    {
-        auto connection = scene().model()->connection(node, port);
-        if (!connection.isValid())
-            return nullptr;
-
-        auto shape = createConnectionShape();
-        auto item = new ConnectionItem(scene(), connection, shape);
-        item->updatePath();
-        item->updateGrid();
-        return item;
     }
 };
 
