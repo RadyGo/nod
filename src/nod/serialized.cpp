@@ -1,7 +1,7 @@
 
 // ----------------------------------------------------------------------------
 
-#include "nod/serializer.h"
+#include "nod/serialized.h"
 
 // ----------------------------------------------------------------------------
 
@@ -9,17 +9,14 @@ namespace nod {
 
 // ----------------------------------------------------------------------------
 
-Serializer::Serializer(QIODevice &device, Reader &reader, Writer &writer)
-    : mDevice(device),
-      mReader(reader),
-      mWriter(writer)
+Serialized::Serialized(bool reading)
+    : mReading(reading)
 {
-
 }
 
 // ----------------------------------------------------------------------------
 
-QJsonValue Serializer::toJson(const QVariant &var)
+QJsonValue Serialized::toJson(const QVariant &var)
 {
     switch (var.type())
     {
@@ -59,20 +56,6 @@ QJsonValue Serializer::toJson(const QVariant &var)
     }
 
     return var.toString();
-}
-
-// ----------------------------------------------------------------------------
-
-bool JsonReader::read(QIODevice &device, Serialized &data)
-{
-    return true;
-}
-
-// ----------------------------------------------------------------------------
-
-bool JsonWriter::write(QIODevice &device, const Serialized &data)
-{
-    return true;
 }
 
 // ----------------------------------------------------------------------------

@@ -28,7 +28,7 @@
 #include "nod/nodeitem.h"
 #include "nod/nodeitemfactory.h"
 #include "nod/nodeview.h"
-#include "nod/serializer.h"
+#include "nod/serialized.h"
 
 namespace nod {
 
@@ -291,11 +291,6 @@ public:
         return -1;
     }
 
-    bool                createNode(const NodeID &node) override
-    {
-        return false;
-    }
-
     NodeIt              firstNode() const override
     {
         if (mNodes.isEmpty())
@@ -490,6 +485,11 @@ public:
     {
         return NodeID::invalid();
     }
+
+    bool createNode(NodeModel &model, const NodeTypeID &type, const NodeID &id) override
+    {
+        return false;
+    }
 };
 
 class TestItemFactory : public DefaultNodeItemFactory
@@ -575,15 +575,10 @@ int main(int argc, char **argv)
     model.mNodes[2].position = QPointF(100, 200);
     //model.mNodes[1].size = QSizeF(300, 400);
 
-    QFile f;
-    JsonReader jr;
-    JsonWriter jw;
-    Serializer s(f, jr, jw);
-    s.setWriting(true);
-    Serialized sd;
-    model.serialize(s, sd);
+    Serialized s(false);
+    model.serialize(s);
 
-    qDebug() << qPrintable(sd.toJson(QJsonDocument::Indented));
+    qDebug() << qPrintable(s.doc().toJson(QJsonDocument::Indented));
 
     NodeID node;
 

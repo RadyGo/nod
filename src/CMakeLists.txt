@@ -15,7 +15,7 @@ set(SOURCES
     nod/nodemodel.cpp
     nod/nodescene.cpp
     nod/nodeview.cpp
-    nod/serializer.cpp
+    nod/serialized.cpp
     nod/undo.cpp
 )
 
@@ -34,7 +34,7 @@ set(HEADERS
     nod/nodemodel.h
     nod/nodescene.h
     nod/nodeview.h
-    nod/serializer.h
+    nod/serialized.h
     nod/undo.h
 )
 

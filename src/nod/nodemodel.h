@@ -106,6 +106,11 @@ inline bool operator!=(const PortIt &a, const PortIt &b)
 
 // ----------------------------------------------------------------------------
 
+/** Data model abstraction.
+ *
+ * Note that nodes are created by the NodeFactory.
+ *
+ */
 class NodeModel : public QObject
 {
     Q_OBJECT
@@ -120,8 +125,6 @@ public:
     virtual QString             roleDisplayName(DataRole role) const;
 
     /* Nodes */
-
-    virtual bool                createNode(const NodeID &node)=0;
 
     virtual QVariant            nodeData(const NodeID &node, DataRole role) const=0;
 
@@ -175,7 +178,7 @@ public:
 
     /* Serialization */
 
-    virtual bool                serialize(Serializer &serializer, Serialized &data)=0;
+    virtual bool                serialize(Serialized &data)=0;
 
 signals:
 

@@ -81,6 +81,8 @@ public:
 
     /** Creates a new node from scratch.
      *
+     * This is used when initially creating nodes.
+     *
      * @param model The model which stores the node data.
      * @param type The type of the node.
      *
@@ -88,6 +90,19 @@ public:
      *
      */
     virtual NodeID              createNode(NodeModel &model, const NodeTypeID &type)=0;
+
+    /** Creates a node with an existing ID.
+     *
+     * This is used when restoring, copy & paste and undo / redo.
+     *
+     * @param model The model which stores the node data.
+     * @param type The type of the node.
+     * @param id The node ID.
+     *
+     * @return Returns true on success.
+     *
+     */
+    virtual bool                createNode(NodeModel &model, const NodeTypeID &type, const NodeID &id)=0;
 
 private:
 

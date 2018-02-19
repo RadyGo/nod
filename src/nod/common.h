@@ -94,6 +94,8 @@ enum class DataRole
 
     Value,
 
+    MaxSerializedRole = Value,
+
     User                = 64
 };
 
@@ -154,11 +156,7 @@ struct Connection
 // ----------------------------------------------------------------------------
 
 class NodeModel;
-class Serializer;
-
-// ----------------------------------------------------------------------------
-
-using Serialized = QJsonDocument;
+class Serialized;
 
 // ----------------------------------------------------------------------------
 

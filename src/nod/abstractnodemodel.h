@@ -30,6 +30,8 @@ public:
 
     using NodeModel::NodeModel;
 
+    /* NodeModel */
+
     NodeID                      connectedNode(const NodeID &node, const PortID &port, PortID *other_port=nullptr) const override;
 
     PortID                      connectedPort(const NodeID &node, const PortID &port) const override;
@@ -52,7 +54,7 @@ public:
 
     bool                        isConnected(const Connection &connection) const override;
 
-    bool                        serialize(Serializer &serializer, Serialized &data) override;
+    bool                        serialize(Serialized &data) override;
 
 private:
 
