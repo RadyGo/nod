@@ -11,6 +11,7 @@
 #include <QMenu>
 #include <QStyleOptionGraphicsItem>
 #include <QUuid>
+#include <QUndoStack>
 #include <QVector2D>
 
 /*
@@ -584,6 +585,26 @@ int main(int argc, char **argv)
 
 
     TestNodeFactory node_factory;
+
+    NodeType type;
+    type.id.value = QUuid("{74bbc2db-f01b-4144-99c1-b49aefff83cb}");
+    type.icon = QIcon(":/icons/package");
+    type.name = QObject::tr("Package");
+    type.description = QObject::tr("This is a package, it contains various things to be transported from one location to another.");
+    node_factory.registerType(type);
+
+    type.id.value = QUuid("{4e3a829c-fd5d-42e8-8ed1-c73724ae20c9}");
+    type.icon = QIcon(":/icons/note");
+    type.name = QObject::tr("Note");
+    type.description = QObject::tr("A note is a piece of text describing the diagram, referencing other documents and other things.");
+    node_factory.registerType(type);
+
+    type.id.value = QUuid("{45cb43d2-1ee5-4ad7-ad4c-42516efdf1b8}");
+    type.icon = QIcon(":/icons/database");
+    type.name = QObject::tr("Database");
+    type.description = QObject::tr("The database stores data for all applications of the system.");
+    node_factory.registerType(type);
+
     TestItemFactory item_factory(node_factory);
 
     DataFlowScene scene(item_factory);
@@ -595,7 +616,8 @@ int main(int argc, char **argv)
     scene.addItem(item);
     */
 
-    NodeView *view = new NodeView(&scene, &w);
+    QUndoStack undo;
+    NodeView *view = new NodeView(&undo, &scene, &w);
     w.setCentralWidget(view);
     view->show();
 

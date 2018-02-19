@@ -15,7 +15,16 @@
 
 // ----------------------------------------------------------------------------
 
+class QUndoStack;
+
+// ----------------------------------------------------------------------------
+
 namespace nod { namespace qgs {
+
+// ----------------------------------------------------------------------------
+
+class AlignDialog;
+class CreateNodeDialog;
 
 // ----------------------------------------------------------------------------
 
@@ -34,6 +43,10 @@ public:
         DebugEnabled,
         GridEnabled,
 
+        CreateNode,
+
+        DeleteSelection,
+
         LayoutGrid,
         LayoutHoriz,
         LayoutVert,
@@ -44,14 +57,29 @@ public:
         AlignBottom,
         AlignDialog,
 
+        Cut,
+        Copy,
+        Paste,
+
+        Undo,
+        Redo,
+
         Count
     };
 
-    NodeView(NodeScene *scene, QWidget *parent=nullptr);
+    NodeView(QUndoStack *undo, NodeScene *scene, QWidget *parent=nullptr);
+
+    NodeScene                   *scene() const { return mScene; }
 
     QAction                     *action(Action action) { return mActions[int(action)]; }
 
+    QUndoStack                  *undoStack() const { return mUndo; }
+
     virtual QMenu               *createMenu();
+
+    virtual AlignDialog         *createAlignDialog();
+
+    virtual CreateNodeDialog    *createCreateNodeDialog();
 
     /* QGraphicsView */
 
@@ -86,7 +114,23 @@ public slots:
 
     virtual void                selectionChanged();
 
+    virtual void                createNode();
+
+    virtual void                deleteSelection();
+
+    virtual void                cut();
+
+    virtual void                copy();
+
+    virtual void                paste();
+
+    virtual void                redo();
+
+    virtual void                undo();
+
 private:
+
+    QUndoStack                  *mUndo = nullptr;
 
     NodeScene                   *mScene;
 

@@ -1,4 +1,4 @@
-This is a work in progress. Documentation will eventually appear here.
+This is a work in progress. Documentation will eventually appear here. Development happens in public, because why not?
 
 # Goals
 
@@ -15,4 +15,4 @@ This is a work in progress. Documentation will eventually appear here.
   * use virtual methods as much as possible so that library users can override them
     * provide implementation helpers for tedious boilerplate code
   * use style objects in standard implementations which allow simple customizations such as colors and fonts
-  * provide several examples showing how to use the library
+* provide several examples showing how to use the library

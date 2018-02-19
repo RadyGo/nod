@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file alias="star">icons/asterisk_orange.png</file>
+        <file alias="note">icons/note.png</file>
+        <file alias="package">icons/package.png</file>
+        <file alias="database">icons/database.png</file>
+    </qresource>
+</RCC>

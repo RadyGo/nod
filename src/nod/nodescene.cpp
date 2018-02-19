@@ -309,7 +309,6 @@ void NodeScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
     bool redraw = false;
     if (event->buttons() & Qt::LeftButton)
     {
-        // TODO: should propably make NodeItem call NodeScene instead
         mGrid.updateGrid();
         redraw = true;
     }

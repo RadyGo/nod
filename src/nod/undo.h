@@ -10,7 +10,8 @@
 
 // ----------------------------------------------------------------------------
 
-#include "nod/common.h"
+#include "nod/nodescene.h"
+#include "nod/serialized.h"
 
 // ----------------------------------------------------------------------------
 
@@ -22,7 +23,7 @@ class CreateNodeCommand : public QUndoCommand
 {
 public:
 
-    CreateNodeCommand(NodeModel &model, const NodeID &id, const QPoint &grid_position);
+    CreateNodeCommand(NodeScene &scene, const NodeTypeID &type, const NodeID &id, const QPoint &grid_position);
 
     void                redo() override;
 
@@ -30,16 +31,18 @@ public:
 
 private:
 
-    Serialized          mData;
+    NodeTypeID          mType;
+    NodeID              mNodeID;
+    QPointF             mPosition;
 };
 
 // ----------------------------------------------------------------------------
 
-class DeleteNodeCommand : public QUndoCommand
+class DeleteSelectionCommand : public QUndoCommand
 {
 public:
 
-    DeleteNodeCommand(NodeModel &model, const NodeID &id, const QPoint &grid_position);
+    DeleteSelectionCommand(NodeScene &scene);
 
     void                redo() override;
 
@@ -56,7 +59,7 @@ class UpdateNodeDataCommand : public QUndoCommand
 {
 public:
 
-    UpdateNodeDataCommand(NodeModel &model, const NodeID &node, const QVariant &value, DataRole role);
+    UpdateNodeDataCommand(NodeScene &scene, const NodeID &node, const QVariant &value, DataRole role);
 
     void                redo() override;
 
@@ -64,7 +67,31 @@ public:
 
 private:
 
-    Serialized          mData;
+    NodeID              mNodeID;
+    DataRole            mRole;
+    QVariant            mOld;
+    QVariant            mNew;
+};
+
+// ----------------------------------------------------------------------------
+
+class UpdatePortDataCommand : public QUndoCommand
+{
+public:
+
+    UpdatePortDataCommand(NodeScene &scene, const NodeID &node, const PortID &port, const QVariant &value, DataRole role);
+
+    void                redo() override;
+
+    void                undo() override;
+
+private:
+
+    NodeID              mNodeID;
+    PortID              mPortID;
+    DataRole            mRole;
+    QVariant            mOld;
+    QVariant            mNew;
 };
 
 // ----------------------------------------------------------------------------
@@ -72,6 +99,45 @@ private:
 class CreateConnectionCommand : public QUndoCommand
 {
 public:
+
+private:
+
+    Connection          mConnection;
+};
+
+// ----------------------------------------------------------------------------
+
+class DeleteConnectionCommand : public QUndoCommand
+{
+public:
+
+private:
+
+    Connection          mConnection;
+};
+
+// ----------------------------------------------------------------------------
+
+class SelectionCommand : public QUndoCommand
+{
+public:
+
+private:
+
+    Connection          mConnection;
+};
+
+// ----------------------------------------------------------------------------
+
+class AlignNodesCommand : public QUndoCommand
+{
+
+};
+
+// ----------------------------------------------------------------------------
+
+class LayoutNodesCommand : public QUndoCommand
+{
 
 };
 

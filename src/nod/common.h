@@ -34,6 +34,7 @@ Q_ENUM_NS(Direction);
 
 // ----------------------------------------------------------------------------
 
+/// Helper for creating distinct ID classes which cannot be accidently mixed up.
 template <int T>
 struct ID
 {
@@ -155,6 +156,7 @@ struct Connection
 
 // ----------------------------------------------------------------------------
 
+class NodeFactory;
 class NodeModel;
 class Serialized;
 
@@ -181,10 +183,10 @@ Q_NAMESPACE
 
 class ConnectionItem;
 class ConnectionShape;
-class NodeScene;
 class NodeGrid;
 class NodeItem;
 class NodeItemFactory;
+class NodeScene;
 
 // ----------------------------------------------------------------------------
 

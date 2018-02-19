@@ -32,6 +32,13 @@ struct NodeType
 
 // ----------------------------------------------------------------------------
 
+inline bool operator==(const NodeType &a, const NodeType &b)
+{
+    return a.id == b.id;
+}
+
+// ----------------------------------------------------------------------------
+
 /** The node factory creates new nodes.
  *
  * It is used during deserialization and when creating nodes via the user

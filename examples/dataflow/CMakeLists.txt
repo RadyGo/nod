@@ -6,5 +6,11 @@ set(SOURCES
 set(HEADERS
 )
 
-add_executable(${PROJECT_NAME} ${HEADERS} ${SOURCES})
+set(RES
+    resources.qrc
+)
+
+qt5_add_resources(QRC ${RES})
+
+add_executable(${PROJECT_NAME} ${HEADERS} ${SOURCES} ${QRC} ${RES})
 target_link_libraries(${PROJECT_NAME} nod)

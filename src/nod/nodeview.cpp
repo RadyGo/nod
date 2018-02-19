@@ -9,13 +9,18 @@
 #include <QButtonGroup>
 #include <QInputDialog>
 #include <QMenu>
+#include <QUndoStack>
 
 // ----------------------------------------------------------------------------
 
+#include "nod/aligndialog.h"
 #include "nod/connectionitem.h"
+#include "nod/createnodedialog.h"
 #include "nod/nodeitem.h"
+#include "nod/nodeitemfactory.h"
 #include "nod/nodescene.h"
 #include "nod/nodeview.h"
+#include "nod/undo.h"
 
 // ----------------------------------------------------------------------------
 
@@ -23,8 +28,9 @@ namespace nod { namespace qgs {
 
 // ----------------------------------------------------------------------------
 
-NodeView::NodeView(NodeScene *scene, QWidget *parent)
+NodeView::NodeView(QUndoStack *undo_stack, NodeScene *scene, QWidget *parent)
     : QGraphicsView(scene, parent),
+      mUndo(undo_stack),
       mScene(scene)
 {
     setDragMode(RubberBandDrag);
@@ -32,6 +38,8 @@ NodeView::NodeView(NodeScene *scene, QWidget *parent)
 
     connect(mScene, &NodeScene::selectionChanged,
             this, &NodeView::selectionChanged);
+
+    // TODO: add more keyboard shortcuts
 
     QAction *debug = new QAction(tr("&Debug"), this);
     debug->setCheckable(true);
@@ -44,6 +52,18 @@ NodeView::NodeView(NodeScene *scene, QWidget *parent)
     grid->setChecked(mScene->drawGrid());
     connect(grid, &QAction::toggled, this, &NodeView::setGrid);
     mActions[int(Action::GridEnabled)] = grid;
+
+    /* create / delete */
+
+    auto create = new QAction(tr("&Create ..."), this);
+    create->setShortcut(Qt::Key_Insert);
+    connect(create, &QAction::triggered, this, &NodeView::createNode);
+    mActions[int(Action::CreateNode)] = create;
+
+    auto del = new QAction(tr("&Delete"), this);
+    del->setShortcut(Qt::Key_Delete);
+    connect(del, &QAction::triggered, this, &NodeView::deleteSelection);
+    mActions[int(Action::DeleteSelection)] = del;
 
     /* align */
 
@@ -80,6 +100,37 @@ NodeView::NodeView(NodeScene *scene, QWidget *parent)
     auto layout_grid = new QAction(tr("&Grid"), this);
     connect(layout_grid, &QAction::triggered, this, &NodeView::layoutGrid);
     mActions[int(Action::LayoutGrid)] = layout_grid;        
+
+
+    /* cut, copy, paste */
+
+    auto cut = new QAction(tr("&Cut"), this);
+    cut->setShortcut(Qt::CTRL + Qt::Key_X);
+    connect(cut, &QAction::triggered, this, &NodeView::cut);
+    mActions[int(Action::Cut)] = cut;
+
+    auto copy = new QAction(tr("C&opy"), this);
+    copy->setShortcut(Qt::CTRL + Qt::Key_C);
+    connect(copy, &QAction::triggered, this, &NodeView::copy);
+    mActions[int(Action::Copy)] = copy;
+
+    auto paste = new QAction(tr("&Paste"), this);
+    paste->setShortcut(Qt::CTRL + Qt::Key_V);
+    connect(copy, &QAction::triggered, this, &NodeView::paste);
+    mActions[int(Action::Paste)] = paste;
+
+    /* undo, redo */
+
+    auto undo = undo_stack->createUndoAction(this);
+    undo->setShortcut(Qt::CTRL + Qt::Key_Z);
+    connect(undo, &QAction::triggered, this, &NodeView::paste);
+    mActions[int(Action::Undo)] = undo;
+
+    auto redo = undo_stack->createRedoAction(this);
+    redo->setShortcut(Qt::CTRL + Qt::SHIFT + Qt::Key_Z);
+    connect(redo, &QAction::triggered, this, &NodeView::redo);
+    mActions[int(Action::Redo)] = redo;
+
 }
 
 // ----------------------------------------------------------------------------
@@ -87,23 +138,49 @@ NodeView::NodeView(NodeScene *scene, QWidget *parent)
 QMenu *NodeView::createMenu()
 {
     QMenu *menu = new QMenu(this);
-    menu->addAction(tr("Create"));
 
-    menu->addAction(action(Action::DebugEnabled));
-    menu->addAction(action(Action::GridEnabled));
+    menu->addAction(action(Action::CreateNode));
+    menu->addAction(action(Action::DeleteSelection));
 
-/*    auto align_menu = menu->addMenu(tr("Align"));
-    align_menu->addAction(action(Action::AlignLeft));
-    align_menu->addAction(action(Action::AlignTop));
-    align_menu->addAction(action(Action::AlignRight));*/
+    menu->addSeparator();
+
+    menu->addAction(action(Action::Cut));
+    menu->addAction(action(Action::Copy));
+    menu->addAction(action(Action::Paste));
+
+    menu->addSeparator();
+
     menu->addAction(action(Action::AlignDialog));
+
+    menu->addSeparator();
 
     auto layout_menu = menu->addMenu(tr("Layout"));
     layout_menu->addAction(action(Action::LayoutHoriz));
     layout_menu->addAction(action(Action::LayoutVert));
     layout_menu->addAction(action(Action::LayoutGrid));
 
+    menu->addSeparator();
+
+    menu->addAction(action(Action::DebugEnabled));
+    menu->addAction(action(Action::GridEnabled));
+
+    menu->addSeparator();
+
     return menu;
+}
+
+// ----------------------------------------------------------------------------
+
+AlignDialog *NodeView::createAlignDialog()
+{
+    return new DefaultAlignDialog(this);
+}
+
+// ----------------------------------------------------------------------------
+
+CreateNodeDialog *NodeView::createCreateNodeDialog()
+{
+    return new DefaultCreateNodeDialog(scene()->itemFactory().nodeFactory(), this);
 }
 
 // ----------------------------------------------------------------------------
@@ -227,105 +304,11 @@ void NodeView::align(Qt::Alignment alignment)
 
 // ----------------------------------------------------------------------------
 
-class AlignDialog : public QDialog
-{
-public:
-
-    AlignDialog(QWidget *parent)
-        : QDialog(parent)
-    {
-        setWindowTitle(tr("Align Nodes"));
-
-        QVBoxLayout *vlayout = new QVBoxLayout(this);
-
-        QButtonGroup *group = new QButtonGroup(this);
-
-        QGridLayout *grid = new QGridLayout(this);
-        vlayout->addLayout(grid);
-
-        QCheckBox *tl = new QCheckBox(QObject::tr("Top Left"), this);
-        tl->setProperty("align", int(Qt::AlignLeft | Qt::AlignTop));
-        grid->addWidget(tl, 0, 0);
-        group->addButton(tl);
-
-        QCheckBox *t = new QCheckBox(QObject::tr("Top"), this);
-        t->setProperty("align", int(Qt::AlignHCenter | Qt::AlignTop));
-        grid->addWidget(t, 0, 1);
-        group->addButton(t);
-
-        QCheckBox *tr = new QCheckBox(QObject::tr("Top Right"), this);
-        tr->setProperty("align", int(Qt::AlignRight | Qt::AlignTop));
-        grid->addWidget(tr, 0, 2);
-        group->addButton(tr);
-
-        QCheckBox *l = new QCheckBox(QObject::tr("Left"), this);
-        l->setProperty("align", int(Qt::AlignLeft | Qt::AlignVCenter));
-        grid->addWidget(l, 1, 0);
-        group->addButton(l);
-
-        QCheckBox *c = new QCheckBox(QObject::tr("Center"), this);
-        c->setProperty("align", int(Qt::AlignHCenter | Qt::AlignVCenter));
-        grid->addWidget(c, 1, 1);
-        group->addButton(c);
-
-        QCheckBox *r = new QCheckBox(QObject::tr("Right"), this);
-        r->setProperty("align", int(Qt::AlignRight | Qt::AlignVCenter));
-        grid->addWidget(r, 1, 2);
-        group->addButton(r);
-
-        QCheckBox *bl = new QCheckBox(QObject::tr("Bottom Left"), this);
-        bl->setProperty("align", int(Qt::AlignLeft | Qt::AlignBottom));
-        grid->addWidget(bl, 2, 0);
-        group->addButton(bl);
-
-        QCheckBox *b = new QCheckBox(QObject::tr("Bottom"), this);
-        b->setProperty("align", int(Qt::AlignHCenter | Qt::AlignBottom));
-        grid->addWidget(b, 2, 1);
-        group->addButton(b);
-
-        QCheckBox *br = new QCheckBox(QObject::tr("Bottom Right"), this);
-        br->setProperty("align", int(Qt::AlignRight | Qt::AlignBottom));
-        grid->addWidget(br, 2, 2);
-        group->addButton(br);
-
-        auto buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
-        vlayout->addWidget(buttons);
-
-        connect(buttons, &QDialogButtonBox::accepted, this, &AlignDialog::accept);
-        connect(buttons, &QDialogButtonBox::rejected, this, &AlignDialog::reject);
-
-        setLayout(vlayout);
-    }
-
-    void                accept() override
-    {
-        auto items = findChildren<QCheckBox*>();
-        for (auto item : items)
-        {
-            if (item->isChecked())
-            {
-                mAlignment = Qt::Alignment(item->property("align").toInt());
-                break;
-            }
-        }
-
-        QDialog::accept();
-    }
-
-    Qt::Alignment       alignment() const { return mAlignment; }
-
-private:
-
-    Qt::Alignment       mAlignment = Qt::AlignTop | Qt::AlignLeft;
-};
-
-// ----------------------------------------------------------------------------
-
 void NodeView::alignDialog()
 {
-    AlignDialog dlg(this);
-    if (dlg.exec() == QDialog::Accepted)
-        align(dlg.alignment());
+    QScopedPointer<AlignDialog> dlg(createAlignDialog());
+    if (dlg && dlg->exec() == QDialog::Accepted)
+        align(dlg->alignment());
 }
 
 // ----------------------------------------------------------------------------
@@ -360,12 +343,54 @@ void NodeView::alignBottom()
 
 void NodeView::selectionChanged()
 {
-    auto selected = scene()->selectedItems();
-    if (!selected.isEmpty())
+    // note that it is safe even with multiple views, all UI code runs in the
+    // same thread and a signle thread cannot call selectionChanged() twice.
+    // actually it can, that's what guard is for.
+
+
+    qDebug() << "NodeView: selection changed";
+
+    static bool guard = false;
+    if (!guard)
     {
+        auto selected = scene()->selectedItems();
+
+        bool has_nodes = false;
+        bool has_conns = false;
+
+        for (auto item : selected)
+        {
+            if (qgraphicsitem_cast<NodeItem*>(item))
+            {
+                has_nodes = true;
+            } else
+            if (qgraphicsitem_cast<ConnectionItem*>(item))
+                has_conns = true;
+        }
+
+        bool sync = false;
+
         for (auto it=mOrderedSelection.begin(); it!=mOrderedSelection.end(); )
         {
-            if (!(*it)->isSelected())
+            bool remove = !(*it)->isSelected();
+            if (!remove)
+            {
+                if (has_nodes)
+                {
+                    if (!qgraphicsitem_cast<NodeItem*>(*it))
+                        remove = true;
+                } else
+                if (has_conns)
+                {
+                    if (!qgraphicsitem_cast<ConnectionItem*>(*it))
+                        remove = true;
+                }
+
+                if (remove)
+                    sync = true;
+            }
+
+            if (remove)
             {
                 it = mOrderedSelection.erase(it);
             } else
@@ -378,8 +403,97 @@ void NodeView::selectionChanged()
                 mOrderedSelection.append(item);
         }
 
-    } else
-        mOrderedSelection.clear();
+        if (sync)
+        {
+            guard = true;
+
+            qDebug() << "NodeView: sync selected";
+
+            mScene->clearSelection();
+
+            for (auto item : selected)
+                item->setSelected(true);
+
+            guard = false;
+        }
+
+        bool has_selection = !mOrderedSelection.isEmpty();
+        action(Action::AlignBottom)->setEnabled(has_selection);
+        action(Action::AlignLeft)->setEnabled(has_selection);
+        action(Action::AlignRight)->setEnabled(has_selection);
+        action(Action::AlignTop)->setEnabled(has_selection);
+        action(Action::AlignDialog)->setEnabled(has_selection);
+
+        action(Action::DeleteSelection)->setEnabled(has_selection);
+
+        action(Action::LayoutGrid)->setEnabled(has_selection);
+        action(Action::LayoutHoriz)->setEnabled(has_selection);
+        action(Action::LayoutVert)->setEnabled(has_selection);
+
+        action(Action::Cut)->setEnabled(has_selection);
+        action(Action::Copy)->setEnabled(has_selection);
+    }
+}
+
+// ----------------------------------------------------------------------------
+
+void NodeView::createNode()
+{
+    QScopedPointer<CreateNodeDialog> dlg(createCreateNodeDialog());
+    if (dlg->exec() != QDialog::Accepted)
+        return;
+
+    auto type = dlg->nodeType();
+    if (type.isValid())
+    {
+        // TODO: use command
+        scene()->itemFactory().nodeFactory().createNode(*scene()->model(), type);
+    }
+}
+
+// ----------------------------------------------------------------------------
+
+void NodeView::deleteSelection()
+{
+    if (scene())
+        mUndo->push(new DeleteSelectionCommand(*scene()));
+}
+
+// ----------------------------------------------------------------------------
+
+void NodeView::cut()
+{
+
+}
+
+// ----------------------------------------------------------------------------
+
+void NodeView::copy()
+{
+
+}
+
+// ----------------------------------------------------------------------------
+
+void NodeView::paste()
+{
+
+}
+
+// ----------------------------------------------------------------------------
+
+void NodeView::redo()
+{
+    if (mUndo)
+        mUndo->redo();
+}
+
+// ----------------------------------------------------------------------------
+
+void NodeView::undo()
+{
+    if (mUndo)
+        mUndo->undo();
 }
 
 // ----------------------------------------------------------------------------

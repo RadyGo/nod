@@ -26,6 +26,7 @@ ConnectionItem::ConnectionItem(NodeScene &scene, const Connection &connection, C
 {
     mScene.addItem(this);
 
+    setFlags(ItemIsSelectable);
     setZValue(ItemZ::Connection);
 }
 

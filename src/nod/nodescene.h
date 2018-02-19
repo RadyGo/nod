@@ -39,6 +39,8 @@ public:
 
     bool                        drawGrid() const { return mDrawGrid; }
 
+    NodeItemFactory             &itemFactory() { return mFactory; }
+
     NodeGrid                    &grid() { return mGrid; }
 
     const NodeGrid              &grid() const { return mGrid; }
