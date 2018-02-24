@@ -48,6 +48,8 @@ public:
 
     virtual QRectF              portLabelRect(const QRectF &rc, const PortID &port) const=0;
 
+    virtual void                updateGrid()=0;
+
     /* QGraphicsItem */
 
     int                         type() const override { return Type; }

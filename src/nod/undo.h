@@ -38,7 +38,22 @@ private:
 
 // ----------------------------------------------------------------------------
 
-class DeleteSelectionCommand : public QUndoCommand
+class SerializedSelectionCommand : public QUndoCommand
+{
+public:
+
+    SerializedSelectionCommand(NodeScene &scene);
+
+    Serialized          &selectionData() { return mData; }
+
+private:
+
+    Serialized          mData;
+};
+
+// ----------------------------------------------------------------------------
+
+class DeleteSelectionCommand : public SerializedSelectionCommand
 {
 public:
 
@@ -50,7 +65,22 @@ public:
 
 private:
 
-    Serialized          mData;
+};
+
+// ----------------------------------------------------------------------------
+
+class CutSelectionCommand : public SerializedSelectionCommand
+{
+public:
+
+    CutSelectionCommand(NodeScene &scene);
+
+    void                redo() override;
+
+    void                undo() override;
+
+private:
+
 };
 
 // ----------------------------------------------------------------------------
@@ -118,13 +148,17 @@ private:
 
 // ----------------------------------------------------------------------------
 
-class SelectionCommand : public QUndoCommand
+class SelectionChangedCommand : public QUndoCommand
 {
 public:
+
+    SelectionChangedCommand(const QVector<NodeID> &before, const QVector<NodeID> &after);
 
 private:
 
     Connection          mConnection;
+    QVector<NodeID>     mBefore;
+    QVector<NodeID>     mAfter;
 };
 
 // ----------------------------------------------------------------------------

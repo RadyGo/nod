@@ -29,6 +29,7 @@ public:
 
     ConnectionShape(NodeGrid &grid);
     virtual ~ConnectionShape();
+
     NodeGrid                    &grid() { return mGrid; }
 
     const QVector<QPointF>      &path() const { return mPath; }
@@ -39,7 +40,6 @@ public:
      *
      */
     virtual void                updatePath(const QPointF &start, const QPointF &end);
-
 
     virtual QRectF              boundingRect() const=0;
 

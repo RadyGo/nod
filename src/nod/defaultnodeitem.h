@@ -74,6 +74,8 @@ public:
 
     QRectF                      portLabelRect(const QRectF &rc, const PortID &port) const override;
 
+    void                        updateGrid() override;
+
 protected:
 
     virtual void                drawHeader(QPainter &painter, const QRectF &rect, const QString &text);

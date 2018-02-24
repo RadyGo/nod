@@ -156,6 +156,13 @@ struct Connection
 
 // ----------------------------------------------------------------------------
 
+inline bool operator==(const Connection &a, const Connection &b)
+{
+    return a.isEqual(b);
+}
+
+// ----------------------------------------------------------------------------
+
 class NodeFactory;
 class NodeModel;
 class Serialized;

@@ -34,7 +34,11 @@ public:
 
     bool                        isReading() const { return mReading; }
 
+    void                        setReading(bool reading=true) { mReading = reading; }
+
     bool                        isWriting() const { return !mReading; }
+
+    void                        setWriting(bool writing=true) { mReading = !writing; }
 
     void                        setMaxSerializedRole(int max) { mMaxSerializedRole = max; }
 

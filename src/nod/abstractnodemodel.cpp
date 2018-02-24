@@ -131,7 +131,7 @@ bool AbstractNodeModel::isConnected(const NodeID &node) const
 {
     for (auto &c : mConnections)
     {
-        if (node.value == c.node1.value || node.value == c.node2.value)
+        if (c.contains(node))
             return true;
     }
     return true;
@@ -143,8 +143,7 @@ bool AbstractNodeModel::isConnected(const NodeID &node, const PortID &port) cons
 {
     for (auto &c : mConnections)
     {
-        if ((node.value == c.node1.value && port.value == c.port1.value) ||
-            (node.value == c.node2.value && port.value == c.port2.value))
+        if (c.contains(node, port))
             return true;
     }
 
@@ -189,17 +188,7 @@ static QJsonArray packPorts(Serialized &data,
             conn.node2 = other_node;
             conn.port2 = other_port;
 
-            bool connected = false;
-            for (auto &c : connections)
-            {
-                if (c.isEqual(conn))
-                {
-                    connected = true;
-                    break;
-                }
-            }
-
-            if (!connected)
+            if (!connections.contains(conn))
                 connections.append(conn);
         }
 
@@ -229,62 +218,91 @@ bool AbstractNodeModel::serialize(Serialized &data)
 {
     if (data.isReading())
     {
-
+        data.isReading();
     } else
     {
-        QVector<Connection> connections;
-
-        QJsonObject root;
-        root["version"] = SerializationVersion;
-
-        QJsonArray nodes;
-        for (auto nit=firstNode(), end=endNode(); nit!=end; nit.next())
-        {
-            auto node_id = nit.node();
-
-            QJsonObject node_obj;
-            node_obj["id"] = QString::fromLocal8Bit(node_id.value.toByteArray());
-
-            node_obj["in"] = packPorts(data, *this, node_id, connections, Direction::Input);
-
-            node_obj["out"] = packPorts(data, *this, node_id, connections, Direction::Output);
-
-            QJsonObject node_data;
-            for (int i=0; i<data.maxSerializedRole(); ++i)
-            {
-                auto role = DataRole(i);
-                auto role_data = nodeData(node_id, role);
-                if (role_data.isNull())
-                    continue;
-
-                auto name = roleName(role);
-                QString key = name ? QString::fromUtf8(name) : QString("%1").arg(i);
-                node_data[key] = Serialized::toJson(role_data);
-            }
-
-            node_obj["data"] = node_data;
-
-            nodes.append(node_obj);
-        }
-
-        root["nodes"] = nodes;
-
-        QJsonArray conn_array;
-        for (auto c : connections)
-        {
-            QJsonObject obj;
-            obj["n1"] = QString::fromLocal8Bit(c.node1.value.toByteArray());
-            obj["p1"] = QString::fromLocal8Bit(c.port1.value.toByteArray());
-            obj["n2"] = QString::fromLocal8Bit(c.node2.value.toByteArray());
-            obj["p2"] = QString::fromLocal8Bit(c.port2.value.toByteArray());
-            conn_array.append(obj);
-        }
-
-        root["connections"] = conn_array;
-
-        data.doc().setObject(root);
+        auto it = firstNode();
+        return writeNodes(data, [this, &it] () -> NodeID {
+            if (it.atEnd())
+                return NodeID::invalid();
+            auto node = it.node();
+            it.next();
+            return node;
+        });
     }
 
+    return true;
+}
+
+// ----------------------------------------------------------------------------
+
+bool AbstractNodeModel::writeNodes(Serialized &data, const QVector<NodeID> &nodes)
+{
+    int at = 0;
+    return writeNodes(data, [&at, &nodes] () -> NodeID {
+        if (at < nodes.size())
+            return nodes[at++];
+        return NodeID::invalid();
+    });
+}
+
+// ----------------------------------------------------------------------------
+
+bool AbstractNodeModel::writeNodes(Serialized &data, std::function<NodeID ()> next)
+{
+    QVector<Connection> connections;
+
+    QJsonObject root;
+    root["version"] = SerializationVersion;
+
+    QJsonArray nodes;
+    while (true)
+    {
+        auto node_id = next();
+        if (!node_id.isValid())
+            break;
+
+        QJsonObject node_obj;
+        node_obj["id"] = QString::fromLocal8Bit(node_id.value.toByteArray());
+
+        node_obj["in"] = packPorts(data, *this, node_id, connections, Direction::Input);
+
+        node_obj["out"] = packPorts(data, *this, node_id, connections, Direction::Output);
+
+        QJsonObject node_data;
+        for (int i=0; i<data.maxSerializedRole(); ++i)
+        {
+            auto role = DataRole(i);
+            auto role_data = nodeData(node_id, role);
+            if (role_data.isNull())
+                continue;
+
+            auto name = roleName(role);
+            QString key = name ? QString::fromUtf8(name) : QString("%1").arg(i);
+            node_data[key] = Serialized::toJson(role_data);
+        }
+
+        node_obj["data"] = node_data;
+
+        nodes.append(node_obj);
+    }
+
+    root["nodes"] = nodes;
+
+    QJsonArray conn_array;
+    for (auto c : connections)
+    {
+        QJsonObject obj;
+        obj["n1"] = QString::fromLocal8Bit(c.node1.value.toByteArray());
+        obj["p1"] = QString::fromLocal8Bit(c.port1.value.toByteArray());
+        obj["n2"] = QString::fromLocal8Bit(c.node2.value.toByteArray());
+        obj["p2"] = QString::fromLocal8Bit(c.port2.value.toByteArray());
+        conn_array.append(obj);
+    }
+
+    root["connections"] = conn_array;
+
+    data.doc().setObject(root);
     return true;
 }
 

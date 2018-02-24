@@ -6,6 +6,11 @@
 
 // ----------------------------------------------------------------------------
 
+#include <deque>
+#include <functional>
+
+// ----------------------------------------------------------------------------
+
 #include <QVector>
 
 // ----------------------------------------------------------------------------
@@ -19,6 +24,41 @@ class QPainter;
 // ----------------------------------------------------------------------------
 
 namespace nod { namespace qgs {
+
+// ----------------------------------------------------------------------------
+
+struct GridCell
+{
+    int                     i, j;
+    int                     from;
+    float                   cost;
+    float                   f, g;
+    int                     visited;
+};
+
+// ----------------------------------------------------------------------------
+
+class PathPlanner
+{
+public:
+
+    enum class Result
+    {
+        NoPath, // no points
+        Blocked, // last path point is blocker
+        Found // last point is p2
+    };
+
+    PathPlanner(NodeGrid &grid);
+
+    Result                      plan(QVector<QPointF> &path, const QPointF &p1, const QPointF &p2, std::function<int (const GridCell &)> fn);
+
+private:
+
+    NodeGrid                    &mGrid;
+    int                         mSearchNo = 0;
+    std::deque<int>             mFrontier;
+};
 
 // ----------------------------------------------------------------------------
 
@@ -48,6 +88,13 @@ public:
 
     QPoint                      cellAt(const QPointF &pt) const;
 
+    int                         cellIndex(const QPoint &cell);
+
+    QLine                       clipCellLine(const QLine &line);
+
+    GridCell                    *cell(const QPoint &cell);
+
+    GridCell                    *cell(int index);
 
     void                        setBlocked(const QRectF &rc, bool blocked);
 
@@ -59,14 +106,7 @@ public:
 
     QPointF                     snapAt(const QPointF &pt, bool center=true) const { return positionAt(cellAt(pt), center); }
 
-    enum class PathResult
-    {
-        NoPath, // no points
-        Blocked, // last path point is blocker
-        Finished // last point is p2
-    };
-
-    PathResult                  path(QVector<QPointF> &path, const QPointF &p1, const QPointF &p2);
+    PathPlanner                 &planner() { return mPlanner; }
 
     void                        updateGrid();
 
@@ -86,18 +126,9 @@ private:
     QSizeF                      mSize;
 
     QSize                       mCells;
-    //QVector<bool>               mGrid;
 
-    struct Cell
-    {
-        int                     i, j;
-        int                     cost;
-        int                     visited;
-    };
-
-    QVector<Cell>               mGrid;
-
-    int                         mSearchNo = 0;
+    QVector<GridCell>           mGrid;
+    PathPlanner                 mPlanner;
 
     int                         cellWeight(int index);
 };

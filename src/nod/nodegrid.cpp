@@ -22,7 +22,8 @@ namespace nod { namespace qgs {
 // ----------------------------------------------------------------------------
 
 NodeGrid::NodeGrid(NodeScene &scene)
-    : mScene(scene)
+    : mScene(scene),
+      mPlanner(*this)
 {
 }
 
@@ -36,7 +37,18 @@ void NodeGrid::setSceneRect(const QRectF &rc)
     mSize = rc.size();
 
     mCells = QSize(ceilf(rc.width() / mGridSize), ceilf(rc.height() / mGridSize));
-    mGrid.resize(mCells.width() * mCells.height());
+    mGrid.resize(mCells.width() * mCells.height());    
+
+    for (int j=0; j<mCells.height(); ++j)
+    {
+        for (int i=0; i<mCells.width(); ++i)
+        {
+            auto &cell = mGrid[i + j * mCells.width()];
+            cell.i = i;
+            cell.j = j;
+            cell.visited = -1;
+        }
+    }
 
     updateGrid();
 
@@ -57,7 +69,7 @@ bool NodeGrid::isCellBlocked(const QPoint &pt) const
 void NodeGrid::setCellBlocked(const QPoint &pt, bool blocked)
 {
     if (pt.x() >= 0 && pt.y() >= 0 && pt.x() < mCells.width() && pt.y() < mCells.height())
-        mGrid[pt.x() + pt.y() * mCells.width()].cost = 100;
+        mGrid[pt.x() + pt.y() * mCells.width()].cost = blocked;
 }
 
 // ----------------------------------------------------------------------------
@@ -97,6 +109,57 @@ QPoint NodeGrid::cellAt(const QPointF &pt) const
 
 // ----------------------------------------------------------------------------
 
+int NodeGrid::cellIndex(const QPoint &cell)
+{
+    if (cell.x() < 0 || cell.x() >= mCells.width() ||
+        cell.y() < 0 || cell.y() >= mCells.height())
+        return -1;
+
+    return cell.x() + cell.y() * mCells.width();
+}
+
+// ----------------------------------------------------------------------------
+
+QLine NodeGrid::clipCellLine(const QLine &line)
+{
+    auto p1 = line.p1();
+    auto p2 = line.p2();
+
+    // sort by x / y
+    auto x0 = p1.x() < p2.x() ? p1.x() : p2.x();
+    auto y0 = p1.y() < p2.y() ? p1.y() : p2.y();
+
+    auto x1 = p1.x() > p2.x() ? p1.x() : p2.x();
+    auto y1 = p1.y() > p2.y() ? p1.y() : p2.y();
+
+
+    QPointF pt;
+    QLineF clip(line);
+    clip.intersect(QLineF(x0, y0, x1, y0), &pt);
+    clip.intersect(QLineF(x1, y0, x1, y1), &pt);
+    clip.intersect(QLineF(x0, y1, x1, y1), &pt);
+    clip.intersect(QLineF(x0, y0, x0, y1), &pt);
+
+    return clip.toLine();
+}
+
+// ----------------------------------------------------------------------------
+
+GridCell *NodeGrid::cell(const QPoint &pt)
+{
+    auto index = cellIndex(pt);
+    return cell(index);
+}
+
+// ----------------------------------------------------------------------------
+
+GridCell *NodeGrid::cell(int index)
+{
+    return index >= 0 ? (&mGrid[index]) : nullptr;
+}
+
+// ----------------------------------------------------------------------------
+
 void NodeGrid::setBlocked(const QRectF &rc, bool blocked)
 {
     auto tl = cellAt(rc.topLeft());
@@ -111,152 +174,6 @@ QPointF NodeGrid::positionAt(const QPoint &cell, bool center) const
     float px = mOrigin.x() + cell.x() * mGridSize + (center ? mGridSize / 2 : 0);
     float py = mOrigin.y() + cell.y() * mGridSize + (center ? mGridSize / 2 : 0);
     return { px, py };
-}
-
-// ----------------------------------------------------------------------------
-
-struct Node
-{
-    //int     index;
-    int     i, j;
-    float   cost;
-    bool    visited;
-};
-
-// ----------------------------------------------------------------------------
-
-bool operator<(const Node &a, const Node &b)
-{
-    return a.cost > b.cost;
-}
-
-// ----------------------------------------------------------------------------
-
-static float l1_norm(int i0, int j0, int i1, int j1)
-{
-  return std::abs(i0 - i1) + std::abs(j0 - j1);
-}
-
-// ----------------------------------------------------------------------------
-
-NodeGrid::PathResult NodeGrid::path(QVector<QPointF> &path, const QPointF &p1, const QPointF &p2)
-{
-    if (mCells.isEmpty())
-        return PathResult::NoPath;
-
-    ++mSearchNo;
-
-    // TODO: https://github.com/hjweide/a-star/blob/master/astar.cpp
-
-    auto c1 = cellAt(p1);
-    auto c2 = cellAt(p2);
-
-    //auto start = c1.x() + c1.y() * mCells.width();
-    //auto end = c2.x() + c2.y() * mCells.width();
-    auto x0 = c1.x() < c2.x() ? c1.x() : c2.x();
-    auto y0 = c1.y() < c2.y() ? c1.y() : c2.y();
-
-    std::deque<Node> frontier;
-    std::vector<Node> visited;
-
-    frontier.push_back({ x0, y0, 0.0f, false });
-
-    int w = mCells.width();
-    int h = mCells.height();
-
-    while (!frontier.empty())
-    {
-        auto &node = frontier.back();
-        frontier.pop_back();
-
-        int n[4][2] = {
-            { node.i > 0 ? node.i - 1 : -1,     node.j },
-            { node.i < w - 1 ? node.i + 1 : -1, node.j },
-            { node.i,                           node.j > 0 ? node.j - 1 : -1 },
-            { node.i,                           node.j < h - 1 ? node.j + 1 : -1 },
-        };
-
-        for (int i=0; i<4; ++i)
-        {
-            auto ni = n[i];
-            if (ni[0] < 0 || ni[1] < 0)
-                continue;
-
-            auto &cell = mGrid[ni[0] + ni[1] * w];
-            if (cell.visited == mSearchNo)
-                continue;
-
-            cell.visited = mSearchNo;
-        }
-
-        /*
-        int n[4] = {
-            node.j > 0 ? node.j .index - mCells.width() : -1,
-            node.i > 0 ? curr.index - 1 : -1,
-            (node.i + 1 < mCells.width()) ? curr.index + 1 : -1,
-            (node.j + 1 < mCells.height()) ? curr.index + mCells.width() : -1,
-        };
-        */
-    }
-
-
-
-#if 0
-    auto start = c1.x() + c1.y() * mCells.width();
-    auto end = c2.x() + c2.y() * mCells.width();
-
-    std::vector<float> costs;
-    costs.resize(mCells.width() * mCells.height());
-
-    for (int i=0; i<costs.size(); ++i)
-        costs[i] = std::numeric_limits<float>::infinity();
-    costs[start] = 0.0f;
-
-    std::priority_queue<Node> next;
-    next.push({ start, 0.0f });
-
-    while (!next.empty())
-    {
-        auto &curr = next.top();
-        if (curr.index == end)
-        {
-            break;
-        }
-
-        next.pop();
-
-        int row = curr.index / mCells.width();
-        int col = curr.index % mCells.width();
-
-        int n[4] = {
-            row > 0 ? curr.index - mCells.width() : -1,
-            col > 0 ? curr.index - 1 : -1,
-            (col + 1 < mCells.width()) ? curr.index + 1 : -1,
-            (row + 1 < mCells.height()) ? curr.index + mCells.width() : -1,
-        };
-
-        for (int i=0; i<4; ++i)
-        {
-            if (n[i] < 0)
-                continue;
-
-            float new_cost = costs[curr.index] + cellWeight(n[i]);
-            if (new_cost >= costs[n[i]])
-                continue;
-
-            float hcost = l1_norm(n[i] / mCells.width(), n[i] % mCells.width(),
-                                  end / mCells.width(), end % mCells.width());
-
-            float prio = new_cost + hcost;
-            next.push({ n[i], prio });
-
-            costs[n[i]] = new_cost;
-            //paths[n[i]] = curr.index;
-        }
-    }
-#endif
-
-    return PathResult::Blocked;
 }
 
 // ----------------------------------------------------------------------------
@@ -345,10 +262,9 @@ void NodeGrid::updateGrid(const QRectF &area)
         auto node = qgraphicsitem_cast<NodeItem*>(item);
         if (node)
         {
-            auto rc = item->sceneBoundingRect();
+            auto rc = node->sceneBoundingRect();
             if (bounds.contains(rc))
-                setBlocked(rc.adjusted(0, 0, -1, -1), true);
-
+                node->updateGrid();
             continue;
         }
 
@@ -363,4 +279,156 @@ void NodeGrid::updateGrid(const QRectF &area)
 
 // ----------------------------------------------------------------------------
 
+PathPlanner::PathPlanner(NodeGrid &grid)
+    : mGrid(grid)
+{
+
+}
+
+// ----------------------------------------------------------------------------
+
+bool operator<(const GridCell &a, const GridCell &b)
+{
+    return a.cost > b.cost;
+}
+
+// ----------------------------------------------------------------------------
+
+static float l1_norm(int i0, int j0, int i1, int j1)
+{
+  return std::abs(i0 - i1) + std::abs(j0 - j1);
+}
+
+// ----------------------------------------------------------------------------
+
+PathPlanner::Result PathPlanner::plan(QVector<QPointF> &path, const QPointF &p1, const QPointF &p2, std::function<int (const GridCell &)> fn)
+{
+    /*
+    qDebug() << "A* from" << p1 << "to" << p2;
+
+    {
+        QDebug d = qDebug();
+        for (int j=0; j<mGrid.cells().height(); ++j)
+        {
+            for (int i=0; i<mGrid.cells().width(); ++i)
+            {
+                auto cell = mGrid.cell(i + j * mGrid.cells().width());
+                d << ' ' << '(' << cell->i << cell->j << ')';
+            }
+            d << '\n';
+        }
+    }
+    */
+
+    path.clear();
+
+    ++mSearchNo;
+
+    auto line = mGrid.clipCellLine(QLine(mGrid.cellAt(p1), mGrid.cellAt(p2)));
+    if (line.isNull())
+        return Result::NoPath;
+
+    auto c1 = line.p1();
+    auto c2 = line.p2();
+
+    //qDebug() << "A* clipped cells" << c1 << "to" << c2;
+
+    auto cell = mGrid.cell(c1);
+    if (!cell)
+        return Result::NoPath;
+
+    cell->from = -1;
+    cell->visited = mSearchNo;
+
+    mFrontier.clear();
+    mFrontier.push_back(mGrid.cellIndex(c1));
+
+    int w = mGrid.cells().width();
+    int h = mGrid.cells().height();
+
+    int last_index = -1;
+    while (!mFrontier.empty())
+    {
+        auto from = mFrontier.front();
+        auto next = mGrid.cell(from);
+        mFrontier.pop_front();
+        if (!next)
+            continue;
+
+        if (next->i == c2.x() && next->j == c2.y())
+        {
+            //qDebug() << "A* found" << next->i << next->j;
+            last_index = from;
+            break;
+        }
+
+        int ni[4][2] = {
+            { next->i > 0 ? next->i - 1 : -1,     next->j },
+            { next->i < w - 1 ? next->i + 1 : -1, next->j },
+            { next->i,                            next->j > 0 ? next->j - 1 : -1 },
+            { next->i,                            next->j < h - 1 ? next->j + 1 : -1 }
+        };
+
+        for (int i=0; i<4; ++i)
+        {
+            if (ni[i][0] < 0 || ni[i][1] < 0)
+                continue;
+
+            auto index = mGrid.cellIndex(QPoint(ni[i][0], ni[i][1]));
+            auto ncell = mGrid.cell(index);
+            if (!ncell || ncell->visited == mSearchNo)
+                continue;
+
+            ncell->from = from;
+            ncell->visited = mSearchNo;
+
+            if (ncell->i == c2.x() && ncell->j == c2.y())
+            {
+                //qDebug() << "A* found" << ncell->i << ncell->j;
+                last_index = index;
+                break;
+            }
+
+            int cost = ncell->cost;
+
+            //qDebug() << "A* cost" << ncell->i << ncell->j << cost;
+
+            int user_cost = fn(*ncell);
+            if (user_cost < 0)
+                continue;
+
+            cost += user_cost;
+
+            if (cost > 0)
+                continue;
+
+            last_index = index;
+
+            mFrontier.push_back(last_index);
+        }
+    }
+
+    if (last_index < 0)
+        return Result::NoPath;
+
+    while (last_index >= 0)
+    {
+        auto cell = mGrid.cell(last_index);
+        //qDebug() << "A* raw path" << cell->i << cell->j;
+        path.append(mGrid.positionAt(QPoint(cell->i, cell->j)));
+        last_index = cell->from;
+    }
+
+    for (int i=0, j=int(path.size())-1; i<j; ++i, --j)
+        std::swap(path[i], path[j]);
+
+    //qDebug() << "A* path" << path;
+
+    return Result::Found;
+}
+
+// ----------------------------------------------------------------------------
+
 } } // namespaces
+
+// ----------------------------------------------------------------------------

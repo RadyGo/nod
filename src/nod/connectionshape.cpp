@@ -1,6 +1,10 @@
 
 // ----------------------------------------------------------------------------
 
+#include "nod/nodegrid.h"
+
+// ----------------------------------------------------------------------------
+
 #include "nod/connectionshape.h"
 
 // ----------------------------------------------------------------------------
@@ -27,9 +31,11 @@ ConnectionShape::~ConnectionShape()
 void ConnectionShape::updatePath(const QPointF &start, const QPointF &end)
 {
     // TODO: use A* planner
-#if 0
+#if 1
     mPath.clear();
-    mGrid.path(mPath, start, end);
+    mGrid.planner().plan(mPath, start, end, [] (const GridCell &cell) -> int {
+        return 0;
+    });
 #else
     mPath.clear();
     mPath.push_back(start);

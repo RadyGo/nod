@@ -54,10 +54,13 @@ void ConnectionItem::updatePath()
 
     mShape->updatePath(c1, c2);
 
+    /*
     auto cx = c1.x() < c2.x() ? c1.x() : c2.x();
     auto cy = c1.y() < c2.y() ? c1.y() : c2.y();
 
-    setPos(cx, cy);
+    auto gsh = mScene.grid().gridSize() / 2;
+    setPos(cx - gsh, cy - gsh);
+    */
 }
 
 // ----------------------------------------------------------------------------
@@ -72,7 +75,10 @@ void ConnectionItem::updateGrid()
 
 QRectF ConnectionItem::boundingRect() const
 {
-    return mShape->boundingRect();
+    auto rc = mShape->boundingRect();
+    //rc.moveTopLeft(rc.topLeft());
+    //rc.moveTopLeft(QPointF(40, 0));
+    return rc;
 }
 
 // ----------------------------------------------------------------------------

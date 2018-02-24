@@ -88,28 +88,19 @@ public:
 
     /** Creates a new node from scratch.
      *
-     * This is used when initially creating nodes.
+     * This is used when initially creating nodes, restoring, copy & paste and undo / redo.
      *
-     * @param model The model which stores the node data.
-     * @param type The type of the node.
-     *
-     * @return The node ID or invalid if failed.
-     *
-     */
-    virtual NodeID              createNode(NodeModel &model, const NodeTypeID &type)=0;
-
-    /** Creates a node with an existing ID.
-     *
-     * This is used when restoring, copy & paste and undo / redo.
+     * A new node ID is generated if the passed node ID is invalid. Pass a valid node ID when
+     * deserializing or an invalid ID when creating new nodes.
      *
      * @param model The model which stores the node data.
      * @param type The type of the node.
      * @param id The node ID.
      *
-     * @return Returns true on success.
+     * @return The node ID or invalid if failed.
      *
      */
-    virtual bool                createNode(NodeModel &model, const NodeTypeID &type, const NodeID &id)=0;
+    virtual NodeID              createNode(NodeModel &model, const NodeTypeID &type, const NodeID &id=NodeID::invalid())=0;
 
 private:
 

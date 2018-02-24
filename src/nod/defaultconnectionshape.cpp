@@ -1,6 +1,7 @@
 
 // ----------------------------------------------------------------------------
 
+#include <QDebug>
 #include <QPainter>
 #include <QPen>
 #include <QVector2D>
@@ -25,7 +26,7 @@ DefaultConnectionShape::DefaultConnectionShape(NodeGrid &grid)
 
 void DefaultConnectionShape::draw(QPainter &painter)
 {
-    // TODO: add to style
+    // TODO: add style object
 
     QPen pen;
     pen.setWidth(2);
@@ -40,6 +41,7 @@ void DefaultConnectionShape::draw(QPainter &painter)
 
 void DefaultConnectionShape::updateGrid()
 {
+#if 0 // reactivate when we properly handle paths during planning (they may not block)
     if (path().size() < 2)
         return;
 
@@ -64,6 +66,7 @@ void DefaultConnectionShape::updateGrid()
                 grid().setCellBlocked(g0 + QPoint(0, gd.y() < 0 ? (-i) : i), true);
         }
     }
+#endif
 }
 
 // ----------------------------------------------------------------------------
@@ -78,6 +81,8 @@ void DefaultConnectionShape::updateShape()
         return;
     }
 
+    //qDebug() << "DefaultConnectionShape: update shape" << path();
+
     QPointF minp(std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
     QPointF maxp(std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest());
 
@@ -90,17 +95,17 @@ void DefaultConnectionShape::updateShape()
         if (pt.y() > maxp.y()) maxp.setY(pt.y());
     }
 
-    int gs = grid().gridSize();
-    auto p0 = path()[0] - minp;
+    //qDebug() << "DefaultConnectionShape: minp" << minp << "maxp" << maxp;
 
+    int gs = grid().gridSize();
+    auto p0 = path()[0];
 
     for (int i=0; i<path().size()-1; ++i)
     {
-        auto p1 = path()[i + 1] - minp;
-
+        auto p1 = path()[i + 1];
         if (i < path().size() - 2)
         {
-            auto p2 = path()[i + 2] - minp;
+            auto p2 = path()[i + 2];
             //auto p2 = path[i + 2];
 
             auto d1 = QVector2D(p1 - p0).normalized();
@@ -128,7 +133,11 @@ void DefaultConnectionShape::updateShape()
         p0 = p1;
     }
 
-    mBounds = QRectF(QPointF(0, 0), maxp - minp);
+    auto size = maxp - minp;
+    mBounds = QRectF(minp, QSizeF(size.x(), size.y()));
+
+    //qDebug() << "DefaultConnectionShape: bounds" << mBounds;
+
 }
 
 // ----------------------------------------------------------------------------

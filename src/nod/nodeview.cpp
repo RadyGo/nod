@@ -20,6 +20,7 @@
 #include "nod/nodeitemfactory.h"
 #include "nod/nodescene.h"
 #include "nod/nodeview.h"
+#include "nod/serialized.h"
 #include "nod/undo.h"
 
 // ----------------------------------------------------------------------------
@@ -463,7 +464,8 @@ void NodeView::deleteSelection()
 
 void NodeView::cut()
 {
-
+    if (scene())
+        mUndo->push(new CutSelectionCommand(*scene()));
 }
 
 // ----------------------------------------------------------------------------

@@ -309,6 +309,8 @@ void NodeScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
     bool redraw = false;
     if (event->buttons() & Qt::LeftButton)
     {
+        // TODO: node item should do this when the item position changes,
+        // also grid updates should probably be queued
         mGrid.updateGrid();
         redraw = true;
     }

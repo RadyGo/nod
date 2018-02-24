@@ -30,6 +30,8 @@ public:
 
     using NodeModel::NodeModel;
 
+    bool                        writeNodes(Serialized &data, std::function<NodeID ()> next);
+
     /* NodeModel */
 
     NodeID                      connectedNode(const NodeID &node, const PortID &port, PortID *other_port=nullptr) const override;
@@ -55,6 +57,8 @@ public:
     bool                        isConnected(const Connection &connection) const override;
 
     bool                        serialize(Serialized &data) override;
+
+    bool                        writeNodes(Serialized &data, const QVector<NodeID> &nodes) override;
 
 private:
 

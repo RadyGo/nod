@@ -209,6 +209,143 @@ public:
 using namespace nod;
 using namespace qgs;
 
+struct DefaultPort
+{
+    NodeID          node;
+    PortID          id;
+    QString         name;
+    Direction       direction;
+};
+
+#if 0
+// TODO: create a ListModel which handles nodes in a sequential order
+// it must be templated and provide node and port template arguments
+template <typename T, typename P=DefaultPort>
+class ListModel : public AbstractNodeModel
+{
+public:
+
+private:
+
+    QVector<T>          mPorts;
+    QVector<T>          mNodes;
+};
+#endif
+
+template <typename T>
+class NodeListMixin
+{
+public:
+
+    NodeIt              firstNode() const;
+
+    NodeIt              endNode() const;
+
+    void                nextNode(NodeIt &it) const;
+
+private:
+
+    QVector<T>          mNodes;
+};
+
+template <typename T>
+class PortListMixin
+{
+public:
+
+    PortIt              firstPort(const NodeID &node) const;
+
+    PortIt              endPort(const NodeID &node) const;
+
+    void                nextPort(PortIt &it) const;
+
+private:
+
+    QVector<T>          mPorts;
+};
+
+class ConnectionMixin
+{
+public:
+
+    NodeID              connectedNode(const NodeID &node, const PortID &port, PortID *other_port=nullptr) const;
+
+    PortID              connectedPort(const NodeID &node, const PortID &port) const;
+
+    Connection          connection(const NodeID &node, const PortID &port) const;
+
+    bool                canConnect(const NodeID &node1, const PortID &port1,
+                                           const NodeID &node2, const PortID &port2) const;
+
+    bool                connect(const NodeID &node1, const PortID &port1,
+                                        const NodeID &node2, const PortID &port2);
+
+    bool                disconnect(const NodeID &node);
+
+    bool                disconnect(const NodeID &node, const PortID &port);
+
+    bool                isConnected(const NodeID &node) const;
+
+    bool                isConnected(const NodeID &node, const PortID &port) const;
+
+    bool                isConnected(const Connection &connection) const;
+
+private:
+
+    QVector<Connection> mConnections;
+};
+
+template <typename N, typename P=PortListMixin<DefaultPort>, typename C=ConnectionMixin>
+class CompositeModel : public AbstractNodeModel
+{
+public:
+
+    /* NodeModel */
+
+    NodeIt              firstNode() const override { return mNodes.firstNode(); };
+
+    NodeIt              endNode() const override { return mNodes.endNode(); }
+
+    void                nextNode(NodeIt &it) const override { mNodes.nextNode(it); }
+
+    PortIt              firstPort(const NodeID &node) const override { return mPorts.firstPort(node); }
+
+    PortIt              endPort(const NodeID &node) const override { return mPorts.endPort(node); }
+
+    void                nextPort(PortIt &it) const override { return mPorts.nextPort(it); }
+
+    NodeID              connectedNode(const NodeID &node, const PortID &port, PortID *other_port=nullptr) const override { return mConnections.connectedNode(node, port, other_port); }
+
+    PortID              connectedPort(const NodeID &node, const PortID &port) const override { return mConnections.connectedPort(node, port); }
+
+    Connection          connection(const NodeID &node, const PortID &port) const override { return mConnections.connection(node, port); }
+
+    bool                canConnect(const NodeID &node1, const PortID &port1,
+                                   const NodeID &node2, const PortID &port2) const override { return mConnections.canConnect(node1, port1, node2, port2); }
+
+    bool                connect(const NodeID &node1, const PortID &port1,
+                                const NodeID &node2, const PortID &port2) override { return mConnections.connect(node1, port1, node2, port2); }
+
+    bool                disconnect(const NodeID &node) override { return mConnections.disconnect(node); }
+
+    bool                disconnect(const NodeID &node, const PortID &port) override { return mConnections.disconnect(node, port); }
+
+    bool                isConnected(const NodeID &node) const override { return mConnections.isConnected(node); }
+
+    bool                isConnected(const NodeID &node, const PortID &port) const override { return mConnections.isConnected(node, port); }
+
+    bool                isConnected(const Connection &connection) const override { return mConnections.isConnected(connection); }
+
+private:
+
+    N                   mNodes;
+    P                   mPorts;
+    C                   mConnections;
+};
+
+template <typename T, typename P=PortListMixin<DefaultPort>>
+using ListModel = CompositeModel<NodeListMixin<T>, P>;
+
 class TestModel : public DataFlowModel
 {
     Q_OBJECT
@@ -482,14 +619,9 @@ class TestNodeFactory : public NodeFactory
 {
 public:
 
-    NodeID createNode(NodeModel &model, const NodeTypeID &type) override
+    NodeID createNode(NodeModel &model, const NodeTypeID &type, const NodeID &id) override
     {
-        return NodeID::invalid();
-    }
-
-    bool createNode(NodeModel &model, const NodeTypeID &type, const NodeID &id) override
-    {
-        return false;
+        return id;
     }
 };
 
@@ -561,19 +693,21 @@ int main(int argc, char **argv)
     auto node2_port2 = model.createPort(node2, QObject::tr("Liquid"), Direction::Output);
     model.commitNode(node2);
 
+    /*
     auto node3 = model.createNode(QObject::tr("Person"));
     auto node3_port1 = model.createPort(node3, QObject::tr("Mouth"), Direction::Input);
     model.commitNode(node3);
+    */
 
     model.connect(node1, node1_port1, node2, node2_port1);
-    model.connect(node2, node2_port2, node3, node3_port1);
+//    model.connect(node2, node2_port2, node3, node3_port1);
 
-    model.mNodes[0].position = QPointF(-300, 0);
+    model.mNodes[0].position = QPointF(0, 0);
     //model.mNodes[0].size = QSizeF(300, 400);
 
-    model.mNodes[1].position = QPointF(-100, 200);
+    model.mNodes[1].position = QPointF(24, 200);
 
-    model.mNodes[2].position = QPointF(100, 200);
+    //model.mNodes[2].position = QPointF(100, 200);
     //model.mNodes[1].size = QSizeF(300, 400);
 
     Serialized s(false);

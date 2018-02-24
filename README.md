@@ -1,4 +1,4 @@
-This is a work in progress. Documentation will eventually appear here. Development happens in public, because why not?
+This is a work in progress. Documentation will eventually appear here. Initial development happens in public, because why not?
 
 # Goals
 
@@ -16,3 +16,4 @@ This is a work in progress. Documentation will eventually appear here. Developme
     * provide implementation helpers for tedious boilerplate code
   * use style objects in standard implementations which allow simple customizations such as colors and fonts
 * provide several examples showing how to use the library
+* do not depend on libraries except for Qt Widget / QML, both being switchable via the build system

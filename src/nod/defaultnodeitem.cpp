@@ -76,7 +76,7 @@ void DefaultNodeItem::drawHeader(QPainter &painter, const QRectF &rect)
 
 // ----------------------------------------------------------------------------
 
-void DefaultNodeItem::drawContent(QPainter &painter, const QRectF &rect)
+void DefaultNodeItem::drawContent(QPainter &, const QRectF &)
 {
 
 }
@@ -109,7 +109,7 @@ void DefaultNodeItem::drawPortLabel(QPainter &painter, const QRectF &rect, const
 
 // ----------------------------------------------------------------------------
 
-void DefaultNodeItem::drawForeground(QPainter &painter, const QRectF &rect)
+void DefaultNodeItem::drawForeground(QPainter &, const QRectF &)
 {
 
 }
@@ -138,7 +138,6 @@ QRectF DefaultNodeItem::portRect(const QRectF &rc, const PortID &port) const
     if (index < 0)
         return QRectF();
 
-    QRectF prc;
     int size = mStyle.port_radius * 2;
     int gs = scene().grid().gridSize();
     int gsh = gs >> 1;
@@ -174,15 +173,25 @@ QRectF DefaultNodeItem::portLabelRect(const QRectF &rc, const PortID &port) cons
         x = port_rc.right() + mStyle.port_label_spacing;
 
     return QRectF(QPointF(x, y), text_rc.size());
-/*
+}
 
-    if (direction == Direction::Input)
-//    {
-//        xoffset -= text_rc.wid
-        return QRectF(port_rc.topRight() - QPointF(0, yoffset), text_rc.size());
+// ----------------------------------------------------------------------------
 
-    return QRectF(port_rc.topLeft() - QPointF(text_rc.width(), yoffset), text_rc.size());
-    */
+void DefaultNodeItem::updateGrid()
+{
+    auto rc = boundingRect();
+    auto scene_rc = QRectF(mapToScene(rc.topLeft()), rc.size());
+
+    scene().grid().setBlocked(scene_rc.adjusted(0, 0, -1, -1), true);
+
+    for (auto it=model()->firstPort(node()); !it.atEnd(); it.next())
+    {
+        auto prc = portRect(rc, it.port());
+        auto pt = scene_rc.topLeft() + prc.topLeft();
+        //auto pt = mapToScene(prc.topLeft());
+        //auto pt = prc.topLeft();
+        scene().grid().setBlocked(pt, false);
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -204,7 +213,6 @@ void DefaultNodeItem::draw(QPainter &painter)
 
     QPainterPath clip;
     int gs = scene().grid().gridSize();
-    int gsh = gs >> 1;
 
     int curved = gs / 3;
     int straight = gs - curved;
