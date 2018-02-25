@@ -386,6 +386,7 @@ PathPlanner::Result PathPlanner::plan(QVector<QPointF> &path, const QPointF &p1,
             {
                 //qDebug() << "A* found" << ncell->i << ncell->j;
                 last_index = index;
+                mFrontier.clear();
                 break;
             }
 
