@@ -57,8 +57,6 @@ public:
 
     NodeItem                    *itemAt(const QPointF &pt, PortID &port_id);
 
-    virtual void                updateSceneRect();
-
     virtual void                nodeMoved(NodeItem *item);
 
     virtual bool                beginCreateConnection(const QPointF &pt, const NodeID &node, const PortID &port);
@@ -78,6 +76,10 @@ public:
     void                        mousePressEvent(QGraphicsSceneMouseEvent *event) override;
 
     void                        mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
+
+public slots:
+
+    virtual void                updateSceneRect();
 
 protected slots:
 

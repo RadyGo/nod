@@ -140,7 +140,7 @@ void NodeScene::updateSceneRect()
 
 void NodeScene::nodeMoved(NodeItem *item)
 {
-    qDebug() << "NodeScene: node moved" << item;
+//    qDebug() << "NodeScene: node moved" << item;
 
     // TODO: maintiain damage area, add item, partial grid update, partial invalidate
     mGrid.updateGrid();
@@ -305,6 +305,8 @@ void NodeScene::nodeCreated(NodeModel &model, const NodeID &node)
         addItem(item);
         mNodeItems.append(item);
     }
+
+    updateSceneRect();
 }
 
 // ----------------------------------------------------------------------------

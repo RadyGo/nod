@@ -349,7 +349,7 @@ void NodeView::selectionChanged()
     // actually it can, that's what guard is for.
 
 
-    qDebug() << "NodeView: selection changed";
+    //qDebug() << "NodeView: selection changed";
 
     static bool guard = false;
     if (!guard)
@@ -440,6 +440,10 @@ void NodeView::selectionChanged()
 
 void NodeView::createNode()
 {
+    QPointF position = mapToScene(mapFromGlobal(QCursor::pos()));
+
+    qDebug() << "NodeView: create at" << position << scene()->grid().cellAt(position);
+
     QScopedPointer<CreateNodeDialog> dlg(createCreateNodeDialog());
     if (dlg->exec() != QDialog::Accepted)
         return;
@@ -448,7 +452,7 @@ void NodeView::createNode()
     if (type.isValid())
     {
         // TODO: use command
-        scene()->itemFactory().nodeFactory().createNode(*scene()->model(), type);
+        scene()->itemFactory().nodeFactory().createNode(*scene()->model(), type, position);
     }
 }
 

@@ -95,12 +95,13 @@ public:
      *
      * @param model The model which stores the node data.
      * @param type The type of the node.
+     * @param position The initial node position.
      * @param id The node ID.
      *
      * @return The node ID or invalid if failed.
      *
      */
-    virtual NodeID              createNode(NodeModel &model, const NodeTypeID &type, const NodeID &id=NodeID::invalid())=0;
+    virtual NodeID              createNode(NodeModel &model, const NodeTypeID &type, const QPointF &position, const NodeID &id=NodeID::invalid())=0;
 
 private:
 

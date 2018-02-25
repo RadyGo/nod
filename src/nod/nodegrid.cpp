@@ -31,7 +31,7 @@ NodeGrid::NodeGrid(NodeScene &scene)
 
 void NodeGrid::setSceneRect(const QRectF &rc)
 {
-    qDebug() << "NodeGrid: set scene rect" << rc;
+    //qDebug() << "NodeGrid: set scene rect" << rc;
 
     mOrigin = rc.topLeft();
     mSize = rc.size();

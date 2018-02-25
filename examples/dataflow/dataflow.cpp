@@ -619,9 +619,13 @@ class TestNodeFactory : public NodeFactory
 {
 public:
 
-    NodeID createNode(NodeModel &model, const NodeTypeID &type, const NodeID &id) override
+    NodeID createNode(NodeModel &model, const NodeTypeID &type, const QPointF &position, const NodeID &id) override
     {
-        return id;
+        auto &tmodel = reinterpret_cast<TestModel&>(model);
+        auto node_id = id.isValid() ? id : tmodel.createNode("test");
+        tmodel.setNodeData(node_id, position, DataRole::Position);
+        tmodel.commitNode(node_id);
+        return node_id;
     }
 };
 
