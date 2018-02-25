@@ -117,6 +117,17 @@ NodeItem *NodeScene::itemAt(const QPointF &pt, PortID &port_id)
 
 // ----------------------------------------------------------------------------
 
+void NodeScene::nodeMoved(NodeItem *item)
+{
+    qDebug() << "NodeScene: node moved" << item;
+
+    // TODO: maintiain damage area, add item, partial grid update, partial invalidate
+    mGrid.updateGrid();
+    invalidate(sceneRect(), QGraphicsScene::ForegroundLayer);
+}
+
+// ----------------------------------------------------------------------------
+
 bool NodeScene::beginCreateConnection(const QPointF &pt, const NodeID &node, const PortID &port)
 {
     mCreateConnection = true;
@@ -306,23 +317,11 @@ void NodeScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 {
     QGraphicsScene::mouseMoveEvent(event);
 
-    bool redraw = false;
-    if (event->buttons() & Qt::LeftButton)
-    {
-        // TODO: node item should do this when the item position changes,
-        // also grid updates should probably be queued
-        mGrid.updateGrid();
-        redraw = true;
-    }
-
     if (mCreateConnection)
     {
         updateCreateConnection(event->scenePos());
-        redraw = true;
-    }
-
-    if (redraw)
         invalidate(sceneRect(), QGraphicsScene::ForegroundLayer);
+    }
 }
 
 

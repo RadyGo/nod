@@ -57,6 +57,8 @@ public:
 
     NodeItem                    *itemAt(const QPointF &pt, PortID &port_id);
 
+    virtual void                nodeMoved(NodeItem *item);
+
     virtual bool                beginCreateConnection(const QPointF &pt, const NodeID &node, const PortID &port);
 
     virtual void                updateCreateConnection(const QPointF &pt);

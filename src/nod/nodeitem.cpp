@@ -40,6 +40,9 @@ QVariant NodeItem::itemChange(GraphicsItemChange change, const QVariant &value)
         if (!mScene.isItemMoveEnabled())
             return pos();
         return mScene.grid().snapAt(value.toPointF(), false);
+    case ItemPositionHasChanged:
+        scene().nodeMoved(this);
+        break;
     default:
         break;
     }
