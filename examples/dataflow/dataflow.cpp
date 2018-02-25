@@ -693,21 +693,19 @@ int main(int argc, char **argv)
     auto node2_port2 = model.createPort(node2, QObject::tr("Liquid"), Direction::Output);
     model.commitNode(node2);
 
-    /*
     auto node3 = model.createNode(QObject::tr("Person"));
     auto node3_port1 = model.createPort(node3, QObject::tr("Mouth"), Direction::Input);
     model.commitNode(node3);
-    */
 
     model.connect(node1, node1_port1, node2, node2_port1);
-//    model.connect(node2, node2_port2, node3, node3_port1);
+    model.connect(node2, node2_port2, node3, node3_port1);
 
     model.mNodes[0].position = QPointF(0, 0);
     //model.mNodes[0].size = QSizeF(300, 400);
 
     model.mNodes[1].position = QPointF(24, 200);
 
-    //model.mNodes[2].position = QPointF(100, 200);
+    model.mNodes[2].position = QPointF(200, 100);
     //model.mNodes[1].size = QSizeF(300, 400);
 
     Serialized s(false);

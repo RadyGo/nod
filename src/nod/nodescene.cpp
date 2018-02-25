@@ -45,38 +45,40 @@ void NodeScene::setModel(NodeModel *model)
 
     clear();
 
-    if (!mModel)
-        return;
-
-    connect(mModel, &NodeModel::destroyed, this, &NodeScene::modelDestroyed);
-    connect(mModel, &NodeModel::nodeCreated, this, &NodeScene::nodeCreated);
-    connect(mModel, &NodeModel::nodeDeleted, this, &NodeScene::nodeDeleted);
-    connect(mModel, &NodeModel::nodeConnected, this, &NodeScene::nodeConnected);
-    connect(mModel, &NodeModel::nodeDisconnected, this, &NodeScene::nodeDisconnected);
-
-
-    auto nit = mModel->firstNode();
-    while (!nit.atEnd())
+    if (mModel)
     {
-        auto node = nit.node();
-        nodeCreated(*mModel, node);
-        nit.next();
-    }
+        connect(mModel, &NodeModel::destroyed, this, &NodeScene::modelDestroyed);
+        connect(mModel, &NodeModel::nodeCreated, this, &NodeScene::nodeCreated);
+        connect(mModel, &NodeModel::nodeDeleted, this, &NodeScene::nodeDeleted);
+        connect(mModel, &NodeModel::nodeConnected, this, &NodeScene::nodeConnected);
+        connect(mModel, &NodeModel::nodeDisconnected, this, &NodeScene::nodeDisconnected);
 
-    nit = mModel->firstNode();
-    while (!nit.atEnd())
-    {
-        auto node = nit.node();
 
-        auto pit = mModel->firstPort(node);
-        while (!pit.atEnd())
+        auto nit = mModel->firstNode();
+        while (!nit.atEnd())
         {
-            nodeConnected(*mModel, node, pit.port());
-            pit.next();
+            auto node = nit.node();
+            nodeCreated(*mModel, node);
+            nit.next();
         }
 
-        nit.next();
+        nit = mModel->firstNode();
+        while (!nit.atEnd())
+        {
+            auto node = nit.node();
+
+            auto pit = mModel->firstPort(node);
+            while (!pit.atEnd())
+            {
+                nodeConnected(*mModel, node, pit.port());
+                pit.next();
+            }
+
+            nit.next();
+        }
     }
+
+    updateSceneRect();
 }
 
 // ----------------------------------------------------------------------------
@@ -117,6 +119,25 @@ NodeItem *NodeScene::itemAt(const QPointF &pt, PortID &port_id)
 
 // ----------------------------------------------------------------------------
 
+void NodeScene::updateSceneRect()
+{
+    QRectF rc;
+    auto all = items();
+    for (auto item : all)
+        rc = rc.united(item->sceneBoundingRect());
+
+    auto gs = grid().gridSize();
+    rc.adjust(-gs, -gs, gs, gs);
+    rc = grid().snap(rc, false);
+    if (rc != sceneRect())
+    {
+        setSceneRect(rc);
+        invalidate(rc);
+    }
+}
+
+// ----------------------------------------------------------------------------
+
 void NodeScene::nodeMoved(NodeItem *item)
 {
     qDebug() << "NodeScene: node moved" << item;
@@ -124,6 +145,7 @@ void NodeScene::nodeMoved(NodeItem *item)
     // TODO: maintiain damage area, add item, partial grid update, partial invalidate
     mGrid.updateGrid();
     invalidate(sceneRect(), QGraphicsScene::ForegroundLayer);
+    updateSceneRect();
 }
 
 // ----------------------------------------------------------------------------

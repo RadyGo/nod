@@ -178,6 +178,19 @@ QPointF NodeGrid::positionAt(const QPoint &cell, bool center) const
 
 // ----------------------------------------------------------------------------
 
+QRectF NodeGrid::snap(const QRectF &rc, bool center)
+{
+    auto p1 = rc.topLeft();
+    auto p2 = rc.bottomRight();
+
+    p1 = snapAt(p1, center);
+    p2 = snapAt(p2, center);
+
+    return QRectF(p1, p2);
+}
+
+// ----------------------------------------------------------------------------
+
 void NodeGrid::debugDraw(QPainter &painter)
 {
     painter.setClipRect(mScene.sceneRect());

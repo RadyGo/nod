@@ -106,6 +106,8 @@ public:
 
     QPointF                     snapAt(const QPointF &pt, bool center=true) const { return positionAt(cellAt(pt), center); }
 
+    QRectF                      snap(const QRectF &rc, bool center=true);
+
     PathPlanner                 &planner() { return mPlanner; }
 
     void                        updateGrid();
