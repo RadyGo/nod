@@ -17,6 +17,7 @@ set(SOURCES
     nod/nodemodel.cpp
     nod/nodescene.cpp
     nod/nodeview.cpp
+    nod/pathplanner.cpp
     nod/serialized.cpp
     nod/undo.cpp
 )
@@ -38,6 +39,7 @@ set(HEADERS
     nod/nodemodel.h
     nod/nodescene.h
     nod/nodeview.h
+    nod/pathplanner.h
     nod/serialized.h
     nod/undo.h
 )
