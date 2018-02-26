@@ -57,24 +57,26 @@ void NodeGrid::setSceneRect(const QRectF &rc)
 
 // ----------------------------------------------------------------------------
 
-bool NodeGrid::isCellBlocked(const QPoint &pt) const
+CellUsage NodeGrid::cellUsage(const QPoint &pt) const
 {
-    return pt.x() < 0 || pt.y() < 0 ||
-           pt.x() >= mCells.width() || pt.y() >= mCells.height() ||
-           mGrid[pt.x() + pt.y() * mCells.width()].cost > 0;
+    if (pt.x() < 0 || pt.y() < 0 || pt.x() >= mCells.width() || pt.y() >= mCells.height())
+        return CellUsage::Solid;
+
+
+    return mGrid[pt.x() + pt.y() * mCells.width()].usage;
 }
 
 // ----------------------------------------------------------------------------
 
-void NodeGrid::setCellBlocked(const QPoint &pt, bool blocked)
+void NodeGrid::setCellUsage(const QPoint &pt, CellUsage usage)
 {
     if (pt.x() >= 0 && pt.y() >= 0 && pt.x() < mCells.width() && pt.y() < mCells.height())
-        mGrid[pt.x() + pt.y() * mCells.width()].cost = blocked;
+        mGrid[pt.x() + pt.y() * mCells.width()].usage = usage;
 }
 
 // ----------------------------------------------------------------------------
 
-void NodeGrid::setCellsBlocked(const QRect &rc, bool blocked)
+void NodeGrid::setCellUsage(const QRect &rc, CellUsage usage)
 {
     QRect bounds(0, 0, mCells.width(), mCells.height());
 
@@ -90,7 +92,7 @@ void NodeGrid::setCellsBlocked(const QRect &rc, bool blocked)
         auto col = row;
         for (int x=0; x<w; ++x)
         {
-            col->cost = blocked ? 100 : 0;
+            col->usage = usage;
             col++;
         }
 
@@ -160,11 +162,11 @@ GridCell *NodeGrid::cell(int index)
 
 // ----------------------------------------------------------------------------
 
-void NodeGrid::setBlocked(const QRectF &rc, bool blocked)
+void NodeGrid::setUsage(const QRectF &rc, CellUsage usage)
 {
     auto tl = cellAt(rc.topLeft());
     auto br = cellAt(rc.bottomRight());
-    setCellsBlocked(QRect(tl, QSize(br.x() - tl.x() + 1, br.y() - tl.y() + 1)), blocked);
+    setCellUsage(QRect(tl, QSize(br.x() - tl.x() + 1, br.y() - tl.y() + 1)), usage);
 }
 
 // ----------------------------------------------------------------------------
@@ -196,15 +198,22 @@ void NodeGrid::debugDraw(QPainter &painter)
     painter.setClipRect(mScene.sceneRect());
     painter.setOpacity(0.5f);
 
-    int c = 0;
+    static const QColor usage_color[4] =
+    {
+        QColor(Qt::lightGray),
+        QColor(Qt::black),
+        QColor(Qt::blue),
+        QColor(Qt::green)
+    };
+
     float y = mOrigin.y();
     for (int j=0; j<mCells.height(); ++j)
     {
         float x = mOrigin.x();
         for (int i=0; i<mCells.width(); ++i)
         {
-            if (mGrid[c++].cost > 0)
-                painter.fillRect(QRectF(x, y, mGridSize, mGridSize), Qt::red);
+            auto &cell = mGrid[i + j * mCells.width()];
+            painter.fillRect(QRectF(x, y, mGridSize, mGridSize), usage_color[int(cell.usage)]);
 
             x += mGridSize;
         }
@@ -267,7 +276,7 @@ void NodeGrid::updateGrid(const QRectF &area)
         return;
 
     QRectF bounds = area.isNull() ? mScene.sceneRect() : area;
-    setBlocked(bounds, false);
+    setUsage(bounds, CellUsage::Empty);
 
     auto items = mScene.items();
     for (auto item : items)
@@ -403,6 +412,9 @@ PathPlanner::Result PathPlanner::plan(QVector<QPointF> &path, const QPointF &p1,
                 break;
             }
 
+            if (isBlocked(*ncell))
+                continue;
+
             int cost = ncell->cost;
 
             //qDebug() << "A* cost" << ncell->i << ncell->j << cost;
@@ -439,6 +451,13 @@ PathPlanner::Result PathPlanner::plan(QVector<QPointF> &path, const QPointF &p1,
     //qDebug() << "A* path" << path;
 
     return Result::Found;
+}
+
+// ----------------------------------------------------------------------------
+
+bool PathPlanner::isBlocked(const GridCell &cell) const
+{
+    return cell.usage == CellUsage::Node || cell.usage == CellUsage::Solid;
 }
 
 // ----------------------------------------------------------------------------

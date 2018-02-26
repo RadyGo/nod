@@ -182,7 +182,7 @@ void DefaultNodeItem::updateGrid()
     auto rc = boundingRect();
     auto scene_rc = QRectF(mapToScene(rc.topLeft()), rc.size());
 
-    scene().grid().setBlocked(scene_rc.adjusted(0, 0, -1, -1), true);
+    scene().grid().setUsage(scene_rc.adjusted(0, 0, -1, -1), CellUsage::Node);
 
     for (auto it=model()->firstPort(node()); !it.atEnd(); it.next())
     {
@@ -190,7 +190,7 @@ void DefaultNodeItem::updateGrid()
         auto pt = scene_rc.topLeft() + prc.topLeft();
         //auto pt = mapToScene(prc.topLeft());
         //auto pt = prc.topLeft();
-        scene().grid().setBlocked(pt, false);
+        scene().grid().setUsage(pt, CellUsage::Empty);
     }
 }
 

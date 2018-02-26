@@ -27,8 +27,19 @@ namespace nod { namespace qgs {
 
 // ----------------------------------------------------------------------------
 
-struct GridCell
+enum class CellUsage
 {
+    Empty,
+    Solid,
+    Connection,
+    Node
+};
+
+// ----------------------------------------------------------------------------
+
+struct GridCell
+{   
+    CellUsage               usage;
     int                     i, j;
     int                     from;
     float                   cost;
@@ -38,6 +49,13 @@ struct GridCell
 
 // ----------------------------------------------------------------------------
 
+/**
+ * Costs:
+ *  * cell occupied by a connection
+ *  * cell occupied by a node
+ *  * number of bends in the path
+ *  * distance from start
+ */
 class PathPlanner
 {
 public:
@@ -58,6 +76,8 @@ private:
     NodeGrid                    &mGrid;
     int                         mSearchNo = 0;
     std::deque<int>             mFrontier;
+
+    bool                        isBlocked(const GridCell &cell) const;
 };
 
 // ----------------------------------------------------------------------------
@@ -78,11 +98,11 @@ public:
     void                        setSceneRect(const QRectF &rc);
 
 
-    bool                        isCellBlocked(const QPoint &pt) const;
+    CellUsage                   cellUsage(const QPoint &pt) const;
 
-    void                        setCellBlocked(const QPoint &pt, bool blocked);
+    void                        setCellUsage(const QPoint &pt, CellUsage usage);
 
-    void                        setCellsBlocked(const QRect &rc, bool blocked);
+    void                        setCellUsage(const QRect &rc, CellUsage usage);
 
     QSize                       cells() const { return mCells; }
 
@@ -96,11 +116,11 @@ public:
 
     GridCell                    *cell(int index);
 
-    void                        setBlocked(const QRectF &rc, bool blocked);
+    void                        setUsage(const QRectF &rc, CellUsage usage);
 
-    bool                        isBlocked(const QPointF &pt) const { return isCellBlocked(cellAt(pt)); }
+    CellUsage                   usage(const QPointF &pt) const { return cellUsage(cellAt(pt)); }
 
-    void                        setBlocked(const QPointF &pt, bool blocked) { setCellBlocked(cellAt(pt), blocked); }
+    void                        setUsage(const QPointF &pt, CellUsage usage) { setCellUsage(cellAt(pt), usage); }
 
     QPointF                     positionAt(const QPoint &cell, bool center=true) const;
 

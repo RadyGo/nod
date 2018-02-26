@@ -478,24 +478,6 @@ public:
         return { const_cast<TestModel &>(*this), node, uint64_t(-1), PortID::invalid(), uint64_t(-1) };
     }
 
-    /*
-    PortID              port(const PortIt &it) const override
-    {
-        if (it.atEnd())
-            return PortID::invalid();
-
-        int node_idx = index(it.node());
-        if (node_idx < 0)
-            return PortID::invalid();
-
-        int port_index = index(node_idx, it.port());
-        if (port_index < 0)
-            return PortID::invalid();
-
-        return mNodes[node_idx].ports[port_index].id;
-    }
-    */
-
     void                nextPort(PortIt &it) const override
     {
         auto end = endPort(it.node());
