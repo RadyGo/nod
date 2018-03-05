@@ -158,6 +158,13 @@ GridCell *NodeGrid::cell(int index)
 
 // ----------------------------------------------------------------------------
 
+const GridCell *NodeGrid::cell(int index) const
+{
+    return index >= 0 ? (&mGrid[index]) : nullptr;
+}
+
+// ----------------------------------------------------------------------------
+
 void NodeGrid::setUsage(const QRectF &rc, CellUsage usage)
 {
     auto tl = cellAt(rc.topLeft());

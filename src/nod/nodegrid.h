@@ -37,7 +37,7 @@ struct GridCell
     CellUsage               usage;
     int                     i, j;
     int                     from;
-    float                   cost;
+    int                     cost;
     float                   f, g;
     int                     visited;
 };
@@ -78,6 +78,8 @@ public:
     GridCell                    *cell(const QPoint &cell);
 
     GridCell                    *cell(int index);
+
+    const GridCell              *cell(int index) const;
 
     void                        setUsage(const QRectF &rc, CellUsage usage);
 

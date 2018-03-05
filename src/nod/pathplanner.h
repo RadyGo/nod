@@ -8,6 +8,7 @@
 
 #include <deque>
 #include <functional>
+#include <queue>
 
 // ----------------------------------------------------------------------------
 
@@ -29,12 +30,21 @@ class NodeGrid;
 
 // ----------------------------------------------------------------------------
 
+struct CellRef
+{
+    int                         priority;
+    int                         cell_index;
+};
+
+// ----------------------------------------------------------------------------
+
 /**
  * Costs:
- *  * cell occupied by a connection
- *  * cell occupied by a node
- *  * number of bends in the path
- *  * distance from start
+ *  * negative cost if close to node (less ankward paths)
+ *  * cell occupied by a connection (minimal cost, so that lines overlap when needed)
+ *  * number of bends in the path (moderate cost to avoid zig-zag lines)
+ *  * distance from start (don't be stupid)
+ *  * cell occupied by a node (infinite cost, can't cross)
  */
 class PathPlanner
 {
@@ -55,7 +65,10 @@ private:
 
     NodeGrid                    &mGrid;
     int                         mSearchNo = 0;
-    std::deque<int>             mFrontier;
+
+    std::priority_queue<CellRef> mFrontier;
+    //std::deque<CellRef> mFrontier;
+    //std::deque<int>             mFrontier;
 
     bool                        isBlocked(const GridCell &cell) const;
 };

@@ -649,6 +649,88 @@ QVariant TestModel::attributeData(NodeID node, int index, NodeRole role)
 }
 #endif
 
+class UndoCommand
+{
+public:
+
+    virtual ~UndoCommand()=0;
+
+    virtual QIcon       icon() const=0;
+
+    virtual QString     name() const=0;
+
+    virtual QString     description() const=0;
+
+    virtual void        undo()=0;
+
+    virtual void        redo()=0;
+};
+
+class QtUndoCommand : public QUndoCommand
+{
+public:
+
+    QtUndoCommand(UndoCommand *cmd)
+        : mCmd(cmd)
+    {
+        setText(cmd->name());
+    }
+
+    ~QtUndoCommand()
+    {
+        delete mCmd;
+    }
+
+    void                undo() override
+    {
+        mCmd->undo();
+    }
+
+    void                redo() override
+    {
+        mCmd->redo();
+    }
+
+private:
+
+    UndoCommand         *mCmd = nullptr;
+};
+
+class UndoStack
+{
+public:
+
+    virtual ~UndoStack()=0;
+
+    virtual void        push(UndoCommand *cmd)=0;
+};
+
+class DefaultUndoStack : public UndoStack
+{
+public:
+
+
+};
+
+class QtUndoStack : public UndoStack
+{
+public:
+
+    QtUndoStack(QUndoStack &stack)
+        : mStack(stack)
+    {
+    }
+
+    void                push(UndoCommand *cmd) override
+    {
+        mStack.push(new QtUndoCommand(cmd));
+    }
+
+private:
+
+    QUndoStack          &mStack;
+};
+
 int main(int argc, char **argv)
 {
     QApplication app(argc, argv);
@@ -679,25 +761,26 @@ int main(int argc, char **argv)
     auto node2_port2 = model.createPort(node2, QObject::tr("Liquid"), Direction::Output);
     model.commitNode(node2);
 
+    /*
     auto node3 = model.createNode(QObject::tr("Person"));
     auto node3_port1 = model.createPort(node3, QObject::tr("Mouth"), Direction::Input);
-    model.commitNode(node3);
+    model.commitNode(node3);*/
 
     model.connect(node1, node1_port1, node2, node2_port1);
-    model.connect(node2, node2_port2, node3, node3_port1);
+    //model.connect(node2, node2_port2, node3, node3_port1);
 
     model.mNodes[0].position = QPointF(0, 0);
     //model.mNodes[0].size = QSizeF(300, 400);
 
     model.mNodes[1].position = QPointF(24, 200);
 
-    model.mNodes[2].position = QPointF(200, 100);
+    //model.mNodes[2].position = QPointF(200, 100);
     //model.mNodes[1].size = QSizeF(300, 400);
 
     Serialized s(false);
     model.serialize(s);
 
-    qDebug() << qPrintable(s.doc().toJson(QJsonDocument::Indented));
+    //qDebug() << qPrintable(s.doc().toJson(QJsonDocument::Indented));
 
     NodeID node;
 
